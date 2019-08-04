@@ -1,0 +1,27 @@
+title = "The subconscious mumblings of therealprof"
+description="Everything you ever wanted to know about electronics, embedded programming, Rust and life in general..."
+default_language = "en"
+
+# The URL the site will be built for
+base_url = "https://therealprof.github.io/"
+
+# Whether to automatically compile all Sass files in the sass directory
+compile_sass = true
+
+# Whether to do syntax highlighting
+# Theme can be customised by setting the `highlight_theme` variable to a theme supported by Zola
+highlight_code = true
+
+# Whether to build a search index to be used later on by a JavaScript library
+build_search_index = true
+
+generate_rss = true
+
+theme = "Ergo"
+
+[extra]
+profile = ''
+
+website = "therealprof.github.io"
+
+github = "therealprof"
