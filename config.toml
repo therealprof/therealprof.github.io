@@ -20,7 +20,7 @@ generate_rss = true
 theme = "Ergo"
 
 [extra]
-profile = ''
+profile = 'profile.jpg'
 
 website = "therealprof.github.io"
 
