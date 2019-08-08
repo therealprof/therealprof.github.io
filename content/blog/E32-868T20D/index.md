@@ -2,6 +2,7 @@
 
 date = 2019-08-06
 title = "A closer look at the E32-868T20D LoRA Module with UART interface"
+slug = "E32-868T20D"
 
 +++
 
