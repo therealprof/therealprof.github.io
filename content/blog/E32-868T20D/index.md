@@ -6,20 +6,21 @@ slug = "E32-868T20D"
 
 +++
 
-## Intro
-
 I've recently set up a gateway for [The Things Network] and to spice things up
 a bit a was looking into possibilities of hooking up some microcontroller based
-board to it.
+board to it. So it started to look into options how to make this happen.
+
+<!-- more -->
 
 As it turns out, Semtech is one of the biggest manufacturers of LoRaWAN capable
 IP cores which are also used by a lot of manufacturers in one way or another.
+
 So I was hoping I would find a [SX1276] based board somewhere in my
 drawer but unfortunately I only found [RAK811] boards which are kind of
-expensive boards with a microcontroller implementing a sophisticated
-LoRA/LoRAWAN stack and a [E32-868T20D] module from EByte which does something
-similar but in a much more [primitive and mostly useless way][E32-868T20D
-manual].
+expensive boards which already come with a microcontroller implementing a
+sophisticated LoRA/LoRAWAN stack requiring interfacing and a [E32-868T20D]
+module from EByte which does something similar but in a much more [primitive
+and mostly useless way][E32-868T20D manual].
 
 This is what it looks like:
 
