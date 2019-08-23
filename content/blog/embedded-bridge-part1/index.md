@@ -2,7 +2,7 @@
 
 date = 2019-08-23
 title = "Introduction into a new approach to develop with and for embedded devices"
-slug = "Embedded Bridge Part 1"
+slug = "Embedded-Bridge-Part-1"
 
 +++
 
