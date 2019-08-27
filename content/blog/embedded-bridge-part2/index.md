@@ -25,7 +25,7 @@ be bi-directional but other than that the sky is the limit.
 One of the most common choices for communication with an MCU is a UART
 interface with TTL voltages (usually 3.3 volts), often referred to as a "serial
 port". While no computer in the world offers a native 3.3V connection to other
-devices this is predominant interface to talk to and programm microcontrollers
+devices this is predominant interface to talk to and program microcontroller
 of all kind or load bitstreams into FPGAs that a lot of manufacturers through a
 USB to serial adapter chip onto a lot of boards or build it into their MCU
 debugging interfaces. This makes it a natural choice for the first
@@ -46,7 +46,7 @@ the todo list to make happen.
 Something which would be really nice to have but will not happen without
 volunteers is Bluetooth Low Energy support. It's not the fastest protocol in
 the world nor is it easy to handle but there're few MCUs out there which
-natively support it and addding support would allow any modern laptop or mobile
+natively support it and adding support would allow any modern laptop or mobile
 phone to use [embedded-bridge] entirely remotely which would be really nice.
 
 ### Ethernet / WiFi
@@ -58,11 +58,11 @@ reach of BLE from far away which would also be nice to have.
 
 ## Higher level protocol
 
-At the higher level the `bridge-common` submodule provides serialisable enums
+At the higher level the `bridge-common` submodule provides serializable enums
 which are turned into efficient binary code with the help of `serde` and [postcard].
 
 The enums are "task based", so each action which can be taken at a peripheral
-will receive their own enum. This includes intialisation, setting, clearing,
+will receive their own enum. This includes initialization, setting, clearing,
 sending and receiving per peripheral type.
 
 By having `bridge-common` implemented as a `no_std` compatible module this can
@@ -76,7 +76,7 @@ the host side allows for en- and decoding of all packets, allowing to trace all
 data exchange between the host and peripherals; we'll see more about this with
 the example later.
 
-The serialised data is pushed over the lower layer, picked up at the target,
+The serialized data is pushed over the lower layer, picked up at the target,
 decoded, processed, a reply encoded and sent back the host over the same
 channel.
 
@@ -84,7 +84,7 @@ On the target side all processing is going through the HAL abstraction, albeit
 with some trickery to simplify the state handling dramatically; if I find a way
 to address this I'll do it but it's quite likely that it will stay that way.
 
-On the host side one can either use a high levellish API or and [embedded-hal]
+On the host side one can either use a high level-ish API or and [embedded-hal]
 compatible abstraction layer on top of it which allows to use (or develop)
 regular drivers directly on the host.
 
@@ -95,8 +95,8 @@ regular drivers directly on the host.
 My development platform of choice is the [STM Nucleo32-F042K6] which is a cute
 little and very affordable little board consisting of a STMicroelectronics
 STM32F042 ARM Cortex-M0 MCU and a ST-Link/V2 debugger in a breadboard friendly
-form factor. The MCU is not only very featurerich and cheap, it is also very
-makerfriendly, which makes it one of my go-to choices for simple custom
+form factor. The MCU is not only very feature rich and cheap, it is also very
+maker friendly, which makes it one of my go-to choices for simple custom
 hardware designs. The built-in ST-Link debugger with USB serial support (and
 internal serial connection between ST-Link and MCU) also makes it usable
 out-of-the-box for this purpose. It even supports crystal-less USB, however
@@ -110,7 +110,7 @@ You can follow along all examples by checking out the [embedded-bridge]
 repository. I'll only highlight the important bits and commands here.
 
 After checking out the repository the first step is to flash the generic
-firmwware onto the MCU. To do this, you'll have to change into the
+firmware onto the MCU. To do this, you'll have to change into the
 `embedded-firmware` subdirectory and (after installing all the tooling for
 compiling Rust code on a Cortex-M0 MCU) compile it:
 ```
@@ -166,7 +166,7 @@ Backing out of `embedded-firmware` and going to `embedded-host` we can now talk
 to the device via the built-in USB serial. To do so we create some boilerplate
 to talk to the USB serial adapter which you can find in any of the
 `nucleo_f042` examples; just copy an example and you're good to go.  The
-initialisation should give you a serial port which we'll store in the variable
+initialization should give you a serial port which we'll store in the variable
 `port` and will use from here on.
 
 You should always start your code by assuring you're using the same version of
@@ -205,7 +205,7 @@ local machine which for me is:
 cargo run --release --example nucleo_f042_gpio_blinky -- /dev/tty.usbmodem144423
 ```
 
-Now watcht the LED blink and toy around as much as you'd like and I'll see you
+Now watch the LED blink and toy around as much as you'd like and I'll see you
 with some more advanced article here soon...
 
 [STM Nucleo32-F042K6]: https://os.mbed.com/platforms/ST-Nucleo-F042K6/
