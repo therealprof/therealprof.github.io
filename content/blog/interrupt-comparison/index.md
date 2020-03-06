@@ -1,7 +1,7 @@
 +++
 
 date = 2020-02-29
-title = "A look into ways to implement and share data with interrupt handlers in Rust"
+title = "A look into ways to implement and share data with interrupt handlers in Rust (Update 1)"
 slug = "interrupt-comparison"
 
 +++
@@ -9,6 +9,10 @@ slug = "interrupt-comparison"
 In this blog entry I will explain a bit what interrupts are and they work in
 embedded systems and compare various interrupt implementation and sharing
 methods in Rust.
+
+**Update 2020-03-06:** @jamesmunns has provided a new version of [cmim] which
+allows to use the `SysTick` exception and an adaption of the example for it so
+I updated this post accordingly.
 
 <!-- more -->
 
@@ -730,6 +734,151 @@ Section size:
 * Custom syntax feels the least idiomatic of all approaches
 * Additional implementation complexity even if the full functionality is not required
 
+## cmim (**Added 2020-03-06**)
+
+[cmim] is crate which aims to simplify the move of resources into an interrupt
+handler in order to avoid having to use a critical section to gain access to a
+resource protected by a `Mutex`. Unlike a `Mutex` it keeps internal track of
+the state of protected resource so it can handle accesses to it accordingly.
+
+### Code
+
+```rust
+#![no_main]
+#![no_std]
+
+use panic_halt as _;
+
+use stm32f0xx_hal::{gpio::*, prelude::*, stm32};
+
+use cortex_m::{peripheral::syst::SystClkSource::Core, Peripherals};
+use cortex_m_rt::{entry, exception};
+
+use cmim::{
+    Move,
+    Context,
+    Exception,
+};
+
+// Mutex protected structure for our shared GPIO pin
+static GPIO: Move<flashing::LEDPIN, stm32::Interrupt> = Move::new_uninitialized(Context::Exception(Exception::SysTick));
+
+#[entry]
+fn main() -> ! {
+    if let (Some(mut p), Some(mut cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
+        cortex_m::interrupt::free(move |cs| {
+            // Configure clock to 48 MHz (i.e. the maximum) and freeze it
+            let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&mut p.FLASH);
+
+            // Get access to individual pins in the GPIO port
+            let gpioa = p.GPIOA.split(&mut rcc);
+
+            // (Re-)configure the pin connected to our LED as output
+            let led = gpioa.pa5.into_push_pull_output(cs);
+
+            // Transfer GPIO into a shared structure
+            GPIO.try_move(led).ok();
+
+            // Set source for SysTick counter, here full operating frequency (== 48MHz)
+            cp.SYST.set_clock_source(Core);
+
+            // Set reload value, i.e. timer delay 48 MHz/4 Mcounts == 12Hz or 83ms
+            cp.SYST.set_reload(4_000_000 - 1);
+
+            // Start counting
+            cp.SYST.enable_counter();
+
+            // Enable interrupt generation
+            cp.SYST.enable_interrupt();
+        });
+    }
+
+    loop {
+        continue;
+    }
+}
+
+// Define an exception handler, i.e. function to call when exception occurs. Here, if our SysTick
+// timer generates an exception the following handler will be called
+#[exception]
+fn SysTick() -> () {
+    // Exception handler state variable
+    static mut STATE: u8 = 0;
+
+    GPIO.try_lock(|led| {
+        // Check state variable, keep LED off most of the time and turn it on every 10th tick
+        if *STATE < 10 {
+            // Turn off the LED
+            led.set_low().ok();
+
+            // And now increment state variable
+            *STATE += 1;
+        } else {
+            // Turn on the LED
+            led.set_high().ok();
+
+            // And set new state variable back to 0
+            *STATE = 0;
+        }
+    }).ok();
+}
+```
+
+### Binary results
+
+#### Optimized
+
+```
+ Bloat for example flashing_cmim
+  File  .text Size         Crate Name
+  0.2%  61.2% 328B flashing_cmim flashing_cmim::__cortex_m_rt_main
+  0.1%  17.9%  96B     [Unknown] SysTick
+  0.0%  11.9%  64B   cortex_m_rt Reset
+  0.0%   1.1%   6B     [Unknown] main
+  0.0%   0.4%   2B   cortex_m_rt HardFault_
+  0.0%   0.4%   2B   cortex_m_rt DefaultPreInit
+  0.0%   0.4%   2B   cortex_m_rt DefaultHandler_
+  0.0%   0.0%   0B               And 0 smaller methods. Use -n N to show more.
+  0.3% 100.0% 536B               .text section size, the file size is 163.0KiB
+
+  Section sizes:
+     text    data     bss     dec     hex filename
+      728       0       4     732     2dc flashing_cmim
+```
+
+#### Unoptimized
+
+```
+  Bloat for example flashing_cmim
+  File  .text    Size         Crate Name
+  0.4%  12.6%  1.4KiB stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze
+  0.2%   5.1%    592B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock
+  0.1%   4.1%    482B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_pll
+  0.1%   2.7%    316B      stm32f0? <stm32f0::stm32f0x2::Interrupt as bare_metal::Nr>::nr
+  0.1%   2.4%    280B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+  0.1%   2.4%    276B stm32f0xx_hal stm32f0xx_hal::gpio::gpioa::PA5<MODE>::into_push_pull_output
+  0.1%   2.0%    236B          cmim cmim::Move<T,I>::try_lock
+  0.1%   1.8%    216B      cortex_m cortex_m::peripheral::scb::<impl cortex_m::peripheral::SCB>::vect_active
+  0.1%   1.8%    210B           std core::ptr::swap_nonoverlapping_bytes
+  0.1%   1.8%    206B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+  2.1%  63.0%  7.2KiB               And 136 smaller methods. Use -n N to show more.
+  3.3% 100.0% 11.4KiB               .text section size, the file size is 345.6KiB
+
+  Section size:
+     text    data     bss     dec     hex filename
+    13816       4       4   13824    3600 flashing_cmim
+```
+
+
+### Pros
+
+* No panic code in binary
+* Easy and straight forward to use
+
+### Cons
+
+* It's not quite obvious what happens behind the scenes and under which conditions this would fall apart
+
 # Epilog
 
 Exploring the various options to use interrupts was quite a fun ride and also
@@ -753,9 +902,11 @@ at [interrupt-comparison]. Feel free to experiment and let me know your
 experiences. Also let me know if you have another approach you feel should be
 covered here.
 
-I was trying to include [cmim] in this comparison but I failed to get the
+~~I was trying to include [cmim] in this comparison but I failed to get the
 `SysTick` exception to work and failed. If this gets addressed I might update
-this blog post with another implementation.
+this blog post with another implementation.~~
+
+**Update 2020-03-06:** [cmim] is now included
 
 Thanks for sticking with me for this long and I hope to see you another time around.
 
@@ -764,6 +915,3 @@ Thanks for sticking with me for this long and I hope to see you another time aro
 [cortex-m-rtfm]: https://crates.io/crates/cortex-m-rtfm
 [irq]: https://crates.io/crates/irq
 [interrupt-comparison]: https://github.com/therealprof/interrupt-comparison
-
-
-
