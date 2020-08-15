@@ -103,7 +103,7 @@ Exciting times. Until next time...
 [E32-868T20D]: http://www.ebyte.com/en/product-view-news.aspx?id=132
 [SX1276]: https://www.semtech.com/products/wireless-rf/lora-transceivers/SX1276
 [STM8L151G]: https://www.st.com/resource/en/datasheet/stm8l151g6.pdf
-[RAK811]: https://www.rakwireless.com/en/module/lora/RAK811
+[RAK811]: https://doc.rakwireless.com/datasheet/rakproducts/rak811-lora-module-datasheet
 [The Things Network]: https://www.thethingsnetwork.org/
 [E32-868T20D manual]: http://www.ebyte.com/en/downpdf.aspx?id=132
 [radio-sx127x]: https://crates.io/crates/radio-sx127x
