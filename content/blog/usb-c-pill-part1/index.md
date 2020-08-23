@@ -2,7 +2,7 @@
 
 date = 2020-08-15
 title = "Introducing: The USB-C pill"
-slug = "USB-C-Pill-Part1 "
+slug = "USB-C-Pill-Part1"
 
 +++
 
