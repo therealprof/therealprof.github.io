@@ -105,12 +105,12 @@ But let's move on to the other use case...
 
 ## Bitfields
 
-One claring omission in the Rust type system is the availability of bitfields
+One glaring omission in the Rust type system is the availability of bitfields
 which is arguably a **MUST HAVE** for any systems programming language.
 Especially in embedded Rust we have thousands of memory-mapped-input-output
 (MMIO) registers which cram a number of different functions, identified by one
 or more bits, into a value located at a specific memory address. To access the
-invidual bits, other languages allow the (very unsafe) specification of
+individual bits, other languages allow the (very unsafe) specification of
 structures as bitfields while we in the Rust world have to use either gnarly
 macros or gobs of Rust code (which also turn into gobs of binary code in `dev`
 mode, but I'll leave that to another Roadmap blog post *maybe*) and are
@@ -205,7 +205,7 @@ it, there're some problems with non-natural sized primitives:
 
 Some random to-dos I can think of from the top of my head:
 
-* Allow `#[repr(T)]` on `struct`s iff the the sizes match
+* Allow `#[repr(T)]` on `struct`s iff the sizes match
 * Add `u`x and `i`x types to the primitives
 * Properly reflect them internally in the compiler so we can eliminate unnecessary bound checks
 * It might be possible to hook those types directly into LLVM to use by code generation backends
