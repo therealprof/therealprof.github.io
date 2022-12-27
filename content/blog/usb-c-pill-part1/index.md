@@ -38,7 +38,7 @@ but the look and feel as well as the handling is pretty much the same.
 
 Someone has created a handy pinout sheet:
 
-<img src="https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1/blob/master/images/STM32F4x1_PinoutDiagram_RichardBalint.png" alt="STM32F4x1 MiniF4 pinout" width="100%"/>
+<img src="https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1/raw/master/images/STM32F4x1_PinoutDiagram_RichardBalint.png" alt="STM32F4x1 MiniF4 pinout" width="100%"/>
 
 A few things worth noting here:
 - A beautiful design with bevelled edges, curvy traces, small SMD parts, proper and useful silk screen and ENIG (probably only on the higher end version)
