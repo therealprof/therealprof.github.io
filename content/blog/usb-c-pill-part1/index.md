@@ -38,7 +38,7 @@ but the look and feel as well as the handling is pretty much the same.
 
 Someone has created a handy pinout sheet:
 
-<img src="https://github.com/WeActTC/MiniF4-STM32F4x1/raw/master/images/STM32F4x1_PinoutDiagram_RichardBalint.png" alt="STM32F4x1 MiniF4 pinout" width="100%"/>
+<img src="https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1/blob/master/images/STM32F4x1_PinoutDiagram_RichardBalint.png" alt="STM32F4x1 MiniF4 pinout" width="100%"/>
 
 A few things worth noting here:
 - A beautiful design with bevelled edges, curvy traces, small SMD parts, proper and useful silk screen and ENIG (probably only on the higher end version)
@@ -199,10 +199,10 @@ still being really affordable.
 Stay tuned for more content using this board, I'll definitely use them every
 now and then for various purposes.
 
-[STM32F4x1 MiniF4]: https://github.com/WeActTC/MiniF4-STM32F4x1
-[WeAct Studio]: https://github.com/WeActTC/
-[CMSIS-DAP]: https://github.com/WeActTC/MiniF4-STM32F4x1/raw/master/SDK/CMSIS-DAP/CMSIS-DAP_WeActStudio.hex
-[purchasing sources]: https://github.com/WeActTC/MiniF4-STM32F4x1#legitimate-purchase-links-as-well-as-pirated-links
+[STM32F4x1 MiniF4]: https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1
+[WeAct Studio]: https://github.com/WeActStudio/
+[CMSIS-DAP]: https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1/blob/master/SDK/CMSIS-DAP/CMSIS-DAP_WeActStudio.hex
+[purchasing sources]: https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1#legitimate-purchase-links-as-well-as-pirated-links
 [probe-rs]: https://probe.rs
 [stm32f4xx-hal]: https://github.com/stm32-rs/stm32f4xx-hal
 [stm32-rs channel on Element.io]: https://matrix.to/#/!WqsLCItsZbJGhRjnxP:matrix.org
