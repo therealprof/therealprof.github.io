@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+        <!-- SEO -->
+        
+        <title> Introducing: The USB-C pill | The subconscious mumblings of therealprof </title>
+        
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport"  content="width=device-width, initial-scale=1.0, maximum-scale=1" >
+
+        <!--  css -->
+        <link rel="stylesheet"  href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/ergo.css" >
+
+        <!-- fonts -->
+        <!-- preload  -->
+        <link rel="preload" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway" as="style">
+        <link rel="preload"  href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous" as="style" >
+        <!-- load -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"  integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+      
+    </head>
+
+    <body>
+      
+        
+<input type="checkbox" id="openSidebarMenu" class="openSidebarMenu">
+<label class="menu cross menu--1" for="openSidebarMenu">
+    <svg viewBox="0 0 75 75" xmlns="https://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="30" />
+        <path class="line--1" d="M0 40h62c13 0 6 28-4 18L35 35" />
+        <path class="line--2" d="M0 50h70" />
+        <path class="line--3" d="M0 60h62c13 0 6-28-4-18L35 65" />
+    </svg>
+</label>
+
+<div id="sidebarMenu">
+    <div class="menu_wrapper">
+        <ul class="sidebarMenuInner">
+            <li>
+                <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" >The subconscious mumblings of therealprof</a>
+                <div class="menu_div" ></div>
+            </li>
+            
+            <li><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+            
+            
+            <li><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <li><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+            
+        </ul>
+    </div>
+</div>
+
+      
+
+      
+<nav id="overlord" class="overlord" >
+  
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+</nav>
+
+<section class="post_container">
+  <article>
+    
+      <h1 class="article_title"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;blog&#x2F;usb-c-pill-part1&#x2F;" id="article_link">Introducing: The USB-C pill</a></h1>
+      
+<ul class="frontmatter frontmatter_page" id="frontmatter">
+    <li>
+        <time class="article_time"  datetime="2020-08-15">August 15, 2020</time>
+    </li>
+    <span class="dotDivider"></span>
+    <li> 1676 words </li>
+    <span class="dotDivider" ></span>
+    <li> 9 min </li>
+</ul>
+
+      <p>In this blog entry I will explore a new excellent and cheap embedded hardware
+board I came across in the context of embedded Rust. This is done in the hope
+that people will jump on it and drop the crapadelic boards known as &quot;BluePill&quot;
+like a hot potato.</p>
+<span id="continue-reading"></span><h1 id="foreword">Foreword</h1>
+<p>As usual with ubiquitous hardware there's one company coming up with the idea
+and initial design and as soon as the product is out, a ton of (often) Chinese
+companies jump on and produce clones of (sometimes) questionable quality, often
+underbidding the original company price-wise and thus destroying their business
+case.</p>
+<p>I want to make it very clear that <strong>I</strong> do not endorse this kind of practise
+and recommend buying the original. For this reason I will make abundantly clear
+what the original is and only point to authentic sources. The original is in
+this case not even more expensive so there's no excuse to buy a clone!</p>
+<p>In this particular case we're talking about the <strong><a href="https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1">STM32F4x1 MiniF4</a></strong> from
+<strong><a href="https://github.com/WeActStudio/">WeAct Studio</a></strong>. They do provide legitimate <a href="https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1#legitimate-purchase-links-as-well-as-pirated-links">purchasing sources</a> so I'd
+recommend checking there if you're interested.</p>
+<h1 id="the-hardware">The hardware</h1>
+<p>The <a href="https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1">STM32F4x1 MiniF4</a> exists in two different variants, one with a STM32F401
+and one with a STM32F411 MCU. The STM32F401 has fewer resources and peripherals
+but the look and feel as well as the handling is pretty much the same.</p>
+<p>Someone has created a handy pinout sheet:</p>
+<img src="https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1/raw/master/images/STM32F4x1_PinoutDiagram_RichardBalint.png" alt="STM32F4x1 MiniF4 pinout" width="100%"/>
+<p>A few things worth noting here:</p>
+<ul>
+<li>A beautiful design with bevelled edges, curvy traces, small SMD parts, proper and useful silk screen and ENIG (probably only on the higher end version)</li>
+<li>USB-C is properly connected, also for data and we're going to make use of that</li>
+<li>The underside has an unpopulated footprint for SPI flash if you want to add that</li>
+<li>The STM32F4xx series has a proper USB bootloader in ROM so we can use the board without extra hardware</li>
+<li>The current version always has 512kB of flash which is plenty</li>
+<li><a href="https://github.com/WeActStudio/">WeAct Studio</a> also provices a CMSDIS-DAP firmware, so if you get two boards you can turn one into a debugger and work on the other</li>
+<li>It's not too obvious but the push button labelled KEY is hooked up to PA0</li>
+<li>The high speed crystal clocks in at 25MHz, there's also a low speed crystal at 32.768kHz for the RTC</li>
+</ul>
+<h1 id="getting-started">Getting started</h1>
+<p>The setup is super simple which makes it easy to use for beginners. If you
+don't have soldering equipment you probably want to find someone who can solder
+in the included headers which makes it a lot simpler to connect external
+hardware or put it on a breadboard but other than that you're ready to go.</p>
+<p>In order to load (aka flash) software onto these boards there're a number of
+options but I'm focusing on the two most promising approaches:</p>
+<h2 id="the-easy-route">The easy route</h2>
+<p>As mentioned above the STM32F4x1 MCUs both have their USB-C connection properly
+wired <strong>and</strong> the built-in bootloader supports flashing directly over it and we
+have the required buttons wired to trigger the procedure 👍, so that's what
+we're going to do now.</p>
+<p>First off we need to have <code>dfu-util</code> installed; how to get them is left as an
+exercise to the reader. Then we should also have <code>cargo-binutils</code> installed
+which allows us to easily turn a binary into the required format for
+<code>dfu-util</code>.</p>
+<p>So if we assume we're in the checked out <code>stm32f4xx-hal</code> repository and we
+wanted to flash the <code>stopwatch-with-ssd1306-and-interrupts</code> example to our
+board (spoiler alert: This example will compile as is but not work fully
+without code changes) we'd do these three steps:</p>
+<ol>
+<li><pre><code># cargo objcopy --release --example stopwatch-with-ssd1306-and-interrupts --features=&quot;stm32f411,rt&quot; -- -O binary out.bin
+    Finished release [optimized + debuginfo] target(s) in 0.03s
+</code></pre>
+to compile the example for a STM32F411 MCU with <code>--release</code> profile and convert it to a binary file <code>out.bin</code></li>
+<li>Hold the <code>NRST</code> and <code>BOOT0</code> buttons at the same time, then let go of <code>NRST</code> while still holding <code>BOOT0</code> button for a second longer</li>
+<li><pre><code># dfu-util -a0 -s 0x08000000  -D out.bin
+dfu-util 0.9
+
+Copyright 2005-2009 Weston Schmidt, Harald Welte and OpenMoko Inc.
+Copyright 2010-2016 Tormod Volden and Stefan Schmidt
+This program is Free Software and has ABSOLUTELY NO WARRANTY
+Please report bugs to http:&#x2F;&#x2F;sourceforge.net&#x2F;p&#x2F;dfu-util&#x2F;tickets&#x2F;
+
+dfu-util: Invalid DFU suffix signature
+dfu-util: A valid DFU suffix will be required in a future dfu-util release!!!
+Opening DFU capable USB device...
+ID 0483:df11
+Run-time device DFU version 011a
+Claiming USB DFU Interface...
+Setting Alternate Setting #0 ...
+Determining device status: state = dfuERROR, status = 10
+dfuERROR, clearing status
+Determining device status: state = dfuIDLE, status = 0
+dfuIDLE, continuing
+DFU mode device DFU version 011a
+Device returned transfer size 2048
+DfuSe interface name: &quot;Internal Flash  &quot;
+Downloading to address = 0x08000000, size = 27904
+Download	[=========================] 100%        27904 bytes
+Download done.
+File downloaded successfully
+</code></pre>
+</li>
+</ol>
+<p>After pushing the <code>NRST</code> button again your program will run.</p>
+<h2 id="the-powerful-route">The powerful route</h2>
+<p>On the other end we have the ability to connect a debug probe and not only
+flash that way but also debug and use some of the fancy new capabilities
+provided by the various <strong><a href="https://probe.rs">probe-rs</a></strong> projects.</p>
+<p>In order to use this route you will need to have a debug probe hardware around.
+There're various routes to obtain one so I'm only going to mention the one
+involving the board we're already talking about.</p>
+<p><a href="https://github.com/WeActStudio/">WeAct Studio</a> published a <a href="https://github.com/WeActStudio/WeActStudio.MiniSTM32F4x1/blob/master/SDK/CMSIS-DAP/CMSIS-DAP_WeActStudio.hex">CMSIS-DAP</a> firmware for our board. Download it and
+make sure have <code>cargo-binutils</code> installed. Then let's convert the downloaded
+file to something <code>dfu-util</code> can handle:</p>
+<pre><code># rust-objcopy -Iihex -O binary CMSIS-DAP_WeActStudio.hex out.bin
+</code></pre>
+<p>Now flash the <code>out.bin</code> as described above to another board. After a reset you
+have debug probe available for our next steps.</p>
+<p>Conveniently that <code>CMSIS-DAP</code> debug probe firmware uses the same pins for probe
+operation as the board to be debugged so by simply hooking up the four pins on
+the end 1:1 to another board you're all set and can even power up the other
+board. I also had success by not soldering any headers to the debug probe board
+and simply funnelling the other header through the holes and letting it sit at
+an angle. YMMV.</p>
+<p>With that out of the way we can finally use all the goodies the embedded Rust
+ecosystem now has to offer, e.g. by installing <code>cargo-flash</code> we can now build
+and flash the firmware directly onto the board in a single step:</p>
+<pre><code># cargo flash --release --example stopwatch-with-ssd1306-and-interrupts --features=&quot;stm32f411,rt&quot; --chip stm32f411ceux
+    Finished release [optimized + debuginfo] target(s) in 0.03s
+    Flashing target&#x2F;thumbv7em-none-eabihf&#x2F;release&#x2F;examples&#x2F;stopwatch-with-ssd1306-and-interrupts
+        WARN probe_rs::architecture::arm::core::m4 &gt; Reason for halt has changed, old reason was Halted(Request), new reason is Exception
+        WARN probe_rs::architecture::arm::core::m4 &gt; Reason for halt has changed, old reason was Halted(Breakpoint), new reason is Request
+        WARN probe_rs::architecture::arm::core::m4 &gt; Reason for halt has changed, old reason was Halted(Request), new reason is Exception
+     Erasing sectors ✔ [00:00:00] [############################################]  32.00KB&#x2F; 32.00KB @  36.90KB&#x2F;s (eta 0s )
+ Programming pages   ✔ [00:00:02] [############################################]  28.00KB&#x2F; 28.00KB @   9.32KB&#x2F;s (eta 0s )
+</code></pre>
+<p>Of course flashing is just the beginning here but I won't go into debugging here.</p>
+<h1 id="next-steps">Next steps</h1>
+<p>Now that we are acquainted with the hardware and the basic setup, it's time to
+work on some software. I'll leave some concrete examples to follow up posts but
+of course I'm not going to hang out to dry here. 😄</p>
+<p>We have excellent community support for these MCUs in <code>[stm32f4xx-hal]</code> from
+which I've also taken the example code above. If you're going to use this
+repository directly, there're a few caveats to watch out for:</p>
+<ul>
+<li>You need to specify the MCU every time you build an application</li>
+<li>The flash and RAM settings are very conservative to fit all possible MCUs in the family but these boards have plenty of flash and RAM which are not going to be utilized</li>
+<li>Some examples don't work on all models and cargo doesn't allow to specify alternative options, if in doubt, adjust <code>Cargo.toml</code>.</li>
+<li>Some examples expect hardware to be connected to specific peripherals/pins and might need adjusting</li>
+<li>Some examples rely on semi-hosting and will thus not do anything useful out-of-the-box (also friends don't let friends use semi-hosting!)</li>
+</ul>
+<p>I'd highly recommend you start a new project and use <a href="https://github.com/stm32-rs/stm32f4xx-hal">stm32f4xx-hal</a> as a
+dependency and set up everything to your liking in the project which will allow
+you to make much quicker progress without a lot of stumbling blocks.</p>
+<p>If you run into problems please join us on <a href="https://matrix.to/#/!WqsLCItsZbJGhRjnxP:matrix.org">stm32-rs channel on Element.io</a>,
+there're always friendly people around (including me 😅) willing to help you
+out.</p>
+<h1 id="the-finale">The finale</h1>
+<p>I ordered these boards a while ago and let them sit around without paying too
+much attention however that was a big mistake. After some people mentioned them
+I decided to take a look and have to say I am impressed by the quality and the
+bang for the buck. Especially in comparison to the thing called a &quot;BluePill&quot;
+which exists in a ton of varieties with subtle (and not so subtle!) differences
+and generally bad quality and a lot of problems. These boards not only offer a
+better build quality, USB-C, built-in USB bootloader, more speed, more FLASH,
+more RAM and more peripherals but a much better user experience, too, while
+still being really affordable.</p>
+<p>Stay tuned for more content using this board, I'll definitely use them every
+now and then for various purposes.</p>
+
+      
+  </article>
+</section>
+
+       
+
+      <footer>
+        
+          
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+          
+<ul class="social_list foot_list" >
+    
+    <li class="button extra_small font_faint"><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+    
+    
+    <li class="button extra_small font_faint"><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="button extra_small font_faint"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+    
+</ul>
+
+        
+      </footer>
+    </body>
+</html>

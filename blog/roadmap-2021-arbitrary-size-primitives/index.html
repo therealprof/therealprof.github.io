@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+        <!-- SEO -->
+        
+        <title> Rust Roadmap 2021: Allowing for arbitrary size integer primitives | The subconscious mumblings of therealprof </title>
+        
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport"  content="width=device-width, initial-scale=1.0, maximum-scale=1" >
+
+        <!--  css -->
+        <link rel="stylesheet"  href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/ergo.css" >
+
+        <!-- fonts -->
+        <!-- preload  -->
+        <link rel="preload" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway" as="style">
+        <link rel="preload"  href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous" as="style" >
+        <!-- load -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"  integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+      
+    </head>
+
+    <body>
+      
+        
+<input type="checkbox" id="openSidebarMenu" class="openSidebarMenu">
+<label class="menu cross menu--1" for="openSidebarMenu">
+    <svg viewBox="0 0 75 75" xmlns="https://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="30" />
+        <path class="line--1" d="M0 40h62c13 0 6 28-4 18L35 35" />
+        <path class="line--2" d="M0 50h70" />
+        <path class="line--3" d="M0 60h62c13 0 6-28-4-18L35 65" />
+    </svg>
+</label>
+
+<div id="sidebarMenu">
+    <div class="menu_wrapper">
+        <ul class="sidebarMenuInner">
+            <li>
+                <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" >The subconscious mumblings of therealprof</a>
+                <div class="menu_div" ></div>
+            </li>
+            
+            <li><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+            
+            
+            <li><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <li><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+            
+        </ul>
+    </div>
+</div>
+
+      
+
+      
+<nav id="overlord" class="overlord" >
+  
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+</nav>
+
+<section class="post_container">
+  <article>
+    
+      <h1 class="article_title"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;blog&#x2F;roadmap-2021-arbitrary-size-primitives&#x2F;" id="article_link">Rust Roadmap 2021: Allowing for arbitrary size integer primitives</a></h1>
+      
+<ul class="frontmatter frontmatter_page" id="frontmatter">
+    <li>
+        <time class="article_time"  datetime="2020-09-06">September 06, 2020</time>
+    </li>
+    <span class="dotDivider"></span>
+    <li> 1309 words </li>
+    <span class="dotDivider" ></span>
+    <li> 7 min </li>
+</ul>
+
+      <p>In this blog entry following the <strong><a href="https://blog.rust-lang.org/2020/09/03/Planning-2021-Roadmap.html">Call for Rust 2021 Roadmap items</a></strong>, I
+shall layout my vision for giving Rust the ability to use arbitrarily sized
+integer primitives.</p>
+<span id="continue-reading"></span><h1 id="motivation">Motivation</h1>
+<p>This request has multiple motivations but following the <strong><a href="https://blog.rust-lang.org/2020/09/03/Planning-2021-Roadmap.html">Call for Rust 2021
+Roadmap items</a></strong> rules I'm notating them in the agile user story way:</p>
+<ul>
+<li>As a system developer I want to be able to be able to use automatically range
+limited types to prevent incorrect use and eliminate error checking</li>
+<li>As an embedded developer I want to be able to safely represent memory-mapped
+registers as bitfields</li>
+</ul>
+<p>So let me give you a bit more background about the status quo and what I mean
+by those two stories before giving you my ideas how to address them.</p>
+<h2 id="range-limited-types">Range limited types</h2>
+<p>In a lot of areas it is quite common to have the desire to provide range
+limited types whose allowed ranges do not coincide with the natural primitive
+but still are a power of 2. E.g. say you want to provide an imaging library
+which is supposed to work with 3 components (<code>R</code>, <code>G</code> and <code>B</code>). The fact that
+we have three components might already provide a hint at what I'm trying to get
+at...</p>
+<p>So let's continue our exploration... A typical representation is <code>RGB888</code> which
+means that each component consists of 8 bits (which is great since we can
+simply use 3 <code>u8</code>s for that and by keeping the components separate we should be
+fine, and not have to worry about the combined representation of 24 bits).</p>
+<p>However, a lot of embedded displays only have a color depths of 16 bits in which
+case the representation is usually something like (RGB565) which leaves us with
+a number of options how to handle those values, neither of which is ideal.</p>
+<p>Today we could do:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">&#x2F;&#x2F;&#x2F; Values outside of the range will be clamped to the highest allowed
+&#x2F;&#x2F;&#x2F; component value
+pub fn set_pixel_rgb565(&amp;mut self, r: u8, g: u8, b: u8) {
+    let (r, g, b) = (max(r, 31), max(g, 63), max(b, 31));
+    ...
+}
+</code></pre>
+<p>or:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">&#x2F;&#x2F;&#x2F; Supplying components values outside the designated range are a
+&#x2F;&#x2F;&#x2F; definite grave user error
+pub fn set_pixel_rgb565(&amp;mut self, r: u8, g: u8, b: u8) {
+    assert!(r &lt; 32);
+    assert!(g &lt; 64);
+    assert!(b &lt; 32);
+    ...
+}
+</code></pre>
+<p>or:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">&#x2F;&#x2F;&#x2F; Supplying components values outside the designated range are a
+&#x2F;&#x2F;&#x2F; will yield a Result needed to be handled by the caller
+pub fn set_pixel_rgb565(&amp;mut self, r: u8, g: u8, b: u8) -&gt; Result&lt;(), E&gt; {
+    if r &gt;= 32 || g &gt;= 64 || b &gt;=32 {
+        return Err(E::OutOfRange);
+    }
+    ...
+}
+</code></pre>
+<p>Neither of the three cases are good and really just making a tradeoff of some kind.</p>
+<p>What we really want to do instead is:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">&#x2F;&#x2F;&#x2F; Rust will do the type-checking for us
+pub fn set_pixel_rgb565(&amp;mut self, r: u5, g: u6, b: u5) {
+    ...
+}
+</code></pre>
+<p>This ensures that only correct types will be passed in and they have exact the
+same behaviour as other all other &quot;natural&quot; primitives.</p>
+<p>Before people will scream at me &quot;why don't you use the <a href="https://crates.io/crates/ux">ux</a> crate for this?&quot;,
+I'd like to point out that this is rather incomplete and outdated and also I'm
+convinced that the compiler can do a much better job at compile time to ensure
+that incorrect uses of such types will be noticed at compile time instead of
+panicking at runtime.</p>
+<p>But let's move on to the other use case...</p>
+<h2 id="bitfields">Bitfields</h2>
+<p>One glaring omission in the Rust type system is the availability of bitfields
+which is arguably a <strong>MUST HAVE</strong> for any systems programming language.
+Especially in embedded Rust we have thousands of memory-mapped-input-output
+(MMIO) registers which cram a number of different functions, identified by one
+or more bits, into a value located at a specific memory address. To access the
+individual bits, other languages allow the (very unsafe) specification of
+structures as bitfields while we in the Rust world have to use either gnarly
+macros or gobs of Rust code (which also turn into gobs of binary code in <code>dev</code>
+mode, but I'll leave that to another Roadmap blog post <em>maybe</em>) and are
+superslow to compile.</p>
+<p>I don't bore you with details or pages of Rust code here, but if you're
+interested in seeing real life code in use today for <strong>one single register(!)</strong>
+of of a STM32F042 MCU generated by <code>svdrust</code>, here's a gist: <a href="https://gist.github.com/therealprof/e0b9c4a811b115d8674c0c2802230ffa">I2C1 CR1 svd2rust code</a>.
+You're also invited to browse the <a href="https://docs.rs/stm32f0/0.11.0/stm32f0/">STM32F0 svd2rust crate docs</a> which is
+constantly getting in conflict with our docs.rs infrastructure due to the
+massive amounts of code required.</p>
+<p>It would be really cool if we could express the basic structure of such a MMIO
+register by using the new primitive types in a regular <code>struct</code>:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">#[repr(u32)]
+struct CR1 {
+    #[doc = &quot;Bit 0 - Peripheral enable&quot;]
+    pe: u1,
+    #[doc = &quot;Bit 1 - TX Interrupt enable&quot;]
+    txie: u1,
+    #[doc = &quot;Bit 2 - RX Interrupt enable&quot;]
+    rxie: u1,
+    #[doc = &quot;Bit 3 - Address match interrupt enable (slave only)&quot;]
+    addrie: u1,
+    #[doc = &quot;Bit 4 - Not acknowledge received interrupt enable&quot;]
+    nackie: u1,
+    #[doc = &quot;Bit 5 - STOP detection Interrupt enable&quot;]
+    stopie: u1,
+    #[doc = &quot;Bit 6 - Transfer Complete interrupt enable&quot;]
+    tcie: u1,
+    #[doc = &quot;Bit 7 - Error interrupts enable&quot;]
+    errie: u1,
+    #[doc = &quot;Bits 8:11 - Digital noise filter&quot;]
+    dnf: u4,
+    #[doc = &quot;Bit 12 - Analog noise filter OFF&quot;]
+    anfoff: u1,
+    #[doc = &quot;Bit 14 - DMA transmission requests enable&quot;]
+    txdmaen: u1,
+    #[doc = &quot;Bit 15 - DMA reception requests enable&quot;]
+    rxdmaen: u1,
+    #[doc = &quot;Bit 16 - Slave byte control&quot;]
+    sbc: u1,
+    #[doc = &quot;Bit 17 - Clock stretching disable&quot;]
+    nostretch: u1,
+    #[doc = &quot;Bit 18 - Wakeup from STOP enable&quot;]
+    wupen: u1,
+    #[doc = &quot;Bit 19 - General call enable&quot;]
+    gcen: u1,
+    #[doc = &quot;Bit 20 - SMBus Host address enable&quot;]
+    smbhen: u1,
+    #[doc = &quot;Bit 21 - SMBus Device Default address enable&quot;]
+    smbden(: u1,
+    #[doc = &quot;Bit 22 - SMBUS alert enable&quot;]
+    alerten: u1,
+    #[doc = &quot;Bit 23 - PEC enable&quot;]
+    pecen: u1,
+    &#x2F;&#x2F; Need to always declare all bits according to `repr` size
+    _unused : u8,
+}
+</code></pre>
+<p>Looks very nice and tidy, doesn't it? Of course we'll still need the accessor
+functions to differentiate between read-only and read-write fields but this
+gets rid of all the error prone bit-shifting and masking code.</p>
+<p>Another usecase of this is real (and space-/execution efficient!) bitmaps:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">&#x2F;&#x2F;&#x2F; size_of::&lt;[bool; 10]&gt;() == 10
+let arr : [bool; 10] = [false; 10];
+
+&#x2F;&#x2F;&#x2F; size_of::&lt;[u1; 10]&gt;() == 2
+let arr : [u1; 10] = [0; 10];
+</code></pre>
+<h1 id="implementation-ideas">Implementation ideas</h1>
+<p>Obviously we cannot simply add a plethora of new primitives and be done with
+it, there're some problems with non-natural sized primitives:</p>
+<ul>
+<li>We cannot (easily) calculate and use a pointer to such a type, so taking a
+pointer would have to be forbidden</li>
+<li>The compiler might (or might not) be bogged down if we add dozens or even
+more than hundred new types (depending on how far we want to take this) so we
+might potentially have to not enable those types by default and require
+explicit <code>use</code> statements instead, which should be fine</li>
+<li>Using a bitfield for MMIO might need some additional rules or some more
+and easier to find documentation than what's currently hidden in the <a href="https://doc.rust-lang.org/nomicon/other-reprs.html">nomicon</a></li>
+<li>... add your own here</li>
+</ul>
+<p>Some random to-dos I can think of from the top of my head:</p>
+<ul>
+<li>Allow <code>#[repr(T)]</code> on <code>struct</code>s iff the sizes match</li>
+<li>Add <code>u</code>x and <code>i</code>x types to the primitives</li>
+<li>Properly reflect them internally in the compiler so we can eliminate unnecessary bound checks</li>
+<li>It might be possible to hook those types directly into LLVM to use by code generation backends</li>
+</ul>
+<p>To avoid this blog from getting too long I'm going to turn this over to the
+core team now for initial consideration.</p>
+<p>Thanks for your attention and hope to blog to y'all soon!</p>
+
+      
+  </article>
+</section>
+
+       
+
+      <footer>
+        
+          
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+          
+<ul class="social_list foot_list" >
+    
+    <li class="button extra_small font_faint"><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+    
+    
+    <li class="button extra_small font_faint"><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="button extra_small font_faint"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+    
+</ul>
+
+        
+      </footer>
+    </body>
+</html>

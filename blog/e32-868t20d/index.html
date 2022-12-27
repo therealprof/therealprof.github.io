@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+        <!-- SEO -->
+        
+        <title> A closer look at the E32-868T20D LoRA Module with UART interface | The subconscious mumblings of therealprof </title>
+        
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport"  content="width=device-width, initial-scale=1.0, maximum-scale=1" >
+
+        <!--  css -->
+        <link rel="stylesheet"  href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/ergo.css" >
+
+        <!-- fonts -->
+        <!-- preload  -->
+        <link rel="preload" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway" as="style">
+        <link rel="preload"  href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous" as="style" >
+        <!-- load -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"  integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+      
+    </head>
+
+    <body>
+      
+        
+<input type="checkbox" id="openSidebarMenu" class="openSidebarMenu">
+<label class="menu cross menu--1" for="openSidebarMenu">
+    <svg viewBox="0 0 75 75" xmlns="https://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="30" />
+        <path class="line--1" d="M0 40h62c13 0 6 28-4 18L35 35" />
+        <path class="line--2" d="M0 50h70" />
+        <path class="line--3" d="M0 60h62c13 0 6-28-4-18L35 65" />
+    </svg>
+</label>
+
+<div id="sidebarMenu">
+    <div class="menu_wrapper">
+        <ul class="sidebarMenuInner">
+            <li>
+                <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" >The subconscious mumblings of therealprof</a>
+                <div class="menu_div" ></div>
+            </li>
+            
+            <li><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+            
+            
+            <li><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <li><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+            
+        </ul>
+    </div>
+</div>
+
+      
+
+      
+<nav id="overlord" class="overlord" >
+  
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+</nav>
+
+<section class="post_container">
+  <article>
+    
+      <h1 class="article_title"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;blog&#x2F;e32-868t20d&#x2F;" id="article_link">A closer look at the E32-868T20D LoRA Module with UART interface</a></h1>
+      
+<ul class="frontmatter frontmatter_page" id="frontmatter">
+    <li>
+        <time class="article_time"  datetime="2019-08-06">August 06, 2019</time>
+    </li>
+    <span class="dotDivider"></span>
+    <li> 769 words </li>
+    <span class="dotDivider" ></span>
+    <li> 4 min </li>
+</ul>
+
+      <p>I've recently set up a gateway for <a href="https://www.thethingsnetwork.org/">The Things Network</a> and to spice things up
+a bit a was looking into possibilities of hooking up some microcontroller based
+board to it. So it started to look into options how to make this happen.</p>
+<span id="continue-reading"></span>
+<p>As it turns out, Semtech is one of the biggest manufacturers of LoRaWAN capable
+IP cores which are also used by a lot of manufacturers in one way or another.</p>
+<p>So I was hoping I would find a <a href="https://www.semtech.com/products/wireless-rf/lora-transceivers/SX1276">SX1276</a> based board somewhere in my
+drawer but unfortunately I only found <a href="https://doc.rakwireless.com/datasheet/rakproducts/rak811-lora-module-datasheet">RAK811</a> boards which are kind of
+expensive boards which already come with a microcontroller implementing a
+sophisticated LoRA/LoRAWAN stack requiring interfacing and a <a href="http://www.ebyte.com/en/product-view-news.aspx?id=132">E32-868T20D</a>
+module from EByte which does something similar but in a much more <a href="http://www.ebyte.com/en/downpdf.aspx?id=132">primitive
+and mostly useless way</a>.</p>
+<p>This is what it looks like:</p>
+<a href="https://therealprof.github.io/blog/E32-868T20D/board_whole.jpg">
+<img src="[object]" />
+</a>
+<p>Since EByte claimed that this is module contains a SX176 based design paired
+with premium components, I'd say we have a look under the hood and see whether
+we can make it useful for us; shall we?`</p>
+<h2 id="under-the-hood">Under the hood</h2>
+<p>So with a bit of fiddling (and the help of SRA chip removal alloy) I removed
+the metal shield and was greeted with these components on the board:</p>
+<a href="https://therealprof.github.io/blog/E32-868T20D/board.jpg">
+<img src="[object]" />
+</a>
+<p>From left to right we can see:</p>
+<ul>
+<li>The SMA connector</li>
+<li>A discrete filter and impedance matching network (look at those beautiful wirewound inductors!)</li>
+<li>The <a href="https://www.semtech.com/products/wireless-rf/lora-transceivers/SX1276">SX1276</a></li>
+<li>A crystal</li>
+<li>A <a href="https://www.st.com/resource/en/datasheet/stm8l151g6.pdf">STM8L151G</a> microcontroller</li>
+<li>Two 3V3 voltage regulators</li>
+<li>Various decoupling caps and resistors</li>
+<li>The 2.54mm pin headers to hook up to a MCU or USB to serial interface</li>
+</ul>
+<p>A few noteworthy things here: First of all, it's a really beautiful, well
+structured and clean design, the SX1276 and the antenna interface are textbook
+and use really high quality components. For whatever reason EByte has chosen
+a rather powerful and expensive <a href="https://www.st.com/resource/en/datasheet/stm8l151g6.pdf">STM8L151G</a> microcontroller for such a dumb
+job. The reason for the two (and different brand!) 3V3 regulators is that one
+is for the MCU and the other one for the SX1276 which is actually conntrolled
+by the microcontroller and only turned on when communication is required.</p>
+<h2 id="reversing-the-module">Reversing the module</h2>
+<p>The module is a bit annoying in that the serial interface is rather useless. It
+only supports a P2P LoRA mode so it can only talk to another module of its kind
+-- pretty much. So my idea was to figure out what's happending under the hood,
+removing the serial interface and wire up the SPI interface of the SX1276 for
+direct use. </p>
+<p>So here's the important bits marked up:</p>
+<a href="https://therealprof.github.io/blog/E32-868T20D/board_reversed.jpg">
+<img src="[object]" />
+</a>
+<p>So basically we should be able to connect the <code>SCK</code>, <code>MISO</code> and <code>MISO</code> pins
+from the SX1276 directly to the <code>AUX</code>, <code>TXD</code> and <code>RXD</code> pins, permanently turn
+on the second LDO and everything should work just fine.</p>
+<h2 id="mod-the-module">Mod the module</h2>
+<p>So here's the modded version:</p>
+<a href="https://therealprof.github.io/blog/E32-868T20D/board_mod.jpg">
+<img src="[object]" />
+</a>
+<p>I decided to remove the LDO for the STM8L151G as there's really no point in
+having a second one which just adds to the noise and draws current all the
+time. Then I'vve used shame wire to cross from the signals coming over from the
+SX1276 to run them directly into the previous output pins of the STM8L151G. 
+The <code>RESET</code> pin I simply bridged over to <code>M0</code>, for this the former LDO line had
+to go, otherwise that'd be connected to the LDO which is probably not good
+for power sequencing reasons. Last but not least the LDO was set to be
+permanently on.</p>
+<p>Of course everything was tested for shorts and proper voltages/power
+consumption so until I can test it via software I'm going to assume it was
+succssfully converted.</p>
+<h2 id="next-steps">Next steps</h2>
+<p>Of course now we'll need some proper Oxidization and turn to writing some Rust
+software. I actually found two implementations, one from Rust Embedded WG
+member Ryan Kurte <a href="https://crates.io/crates/radio-sx127x">radio-sx127x</a> and one from Charles Wade <a href="https://crates.io/crates/sx127x_lora">sx127x_lora</a>. So
+all that there's left to do is try them out.</p>
+<p>Exciting times. Until next time...</p>
+
+      
+  </article>
+</section>
+
+       
+
+      <footer>
+        
+          
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+          
+<ul class="social_list foot_list" >
+    
+    <li class="button extra_small font_faint"><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+    
+    
+    <li class="button extra_small font_faint"><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="button extra_small font_faint"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+    
+</ul>
+
+        
+      </footer>
+    </body>
+</html>

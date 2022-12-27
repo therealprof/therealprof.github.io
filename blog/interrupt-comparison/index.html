@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+        <!-- SEO -->
+        
+        <title> A look into ways to implement and share data with interrupt handlers in Rust (Update 1) | The subconscious mumblings of therealprof </title>
+        
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport"  content="width=device-width, initial-scale=1.0, maximum-scale=1" >
+
+        <!--  css -->
+        <link rel="stylesheet"  href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/ergo.css" >
+
+        <!-- fonts -->
+        <!-- preload  -->
+        <link rel="preload" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway" as="style">
+        <link rel="preload"  href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous" as="style" >
+        <!-- load -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"  integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+      
+    </head>
+
+    <body>
+      
+        
+<input type="checkbox" id="openSidebarMenu" class="openSidebarMenu">
+<label class="menu cross menu--1" for="openSidebarMenu">
+    <svg viewBox="0 0 75 75" xmlns="https://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="30" />
+        <path class="line--1" d="M0 40h62c13 0 6 28-4 18L35 35" />
+        <path class="line--2" d="M0 50h70" />
+        <path class="line--3" d="M0 60h62c13 0 6-28-4-18L35 65" />
+    </svg>
+</label>
+
+<div id="sidebarMenu">
+    <div class="menu_wrapper">
+        <ul class="sidebarMenuInner">
+            <li>
+                <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" >The subconscious mumblings of therealprof</a>
+                <div class="menu_div" ></div>
+            </li>
+            
+            <li><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+            
+            
+            <li><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <li><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+            
+        </ul>
+    </div>
+</div>
+
+      
+
+      
+<nav id="overlord" class="overlord" >
+  
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+</nav>
+
+<section class="post_container">
+  <article>
+    
+      <h1 class="article_title"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;blog&#x2F;interrupt-comparison&#x2F;" id="article_link">A look into ways to implement and share data with interrupt handlers in Rust (Update 1)</a></h1>
+      
+<ul class="frontmatter frontmatter_page" id="frontmatter">
+    <li>
+        <time class="article_time"  datetime="2020-02-29">February 29, 2020</time>
+    </li>
+    <span class="dotDivider"></span>
+    <li> 4338 words </li>
+    <span class="dotDivider" ></span>
+    <li> 22 min </li>
+</ul>
+
+      <p>In this blog entry I will explain a bit what interrupts are and they work in
+embedded systems and compare various interrupt implementation and sharing
+methods in Rust.</p>
+<p><strong>Update 2020-03-06:</strong> @jamesmunns has provided a new version of <a href="https://crates.io/crates/cmim">cmim</a> which
+allows to use the <code>SysTick</code> exception and an adaption of the example for it so
+I updated this post accordingly.</p>
+<span id="continue-reading"></span><h1 id="interrupt-handling">Interrupt handling</h1>
+<h2 id="interrupt">Interrupt</h2>
+<p>An interrupt is a hardware method to react to special events recognized by the
+system to <strong>interrupt</strong> regular program flow and do some special handling of the
+event which caused the interrupt. This mechanism does not only exist for micro
+controllers but is also present on regular CPUs. On the latter it is used
+especially by external components, e.g. extension cards or connected external
+peripherals which can notify the system about events (e.g. data to be
+processed is available) by generating an interrupt signal. The other common case
+is that interrupts are generated internally in the processing core by
+configuration of certain trigger events, e.g. if some memory access violation
+happened, some timer expired or the transmit buffer is empty.</p>
+<p>To enable the use of interrupts on a system there's a special hardware element
+called an <strong>interrupt controller</strong> which can be programmed to handle such special
+events happening in the system. Interrupts have a defined or configurable
+<strong>priority</strong> and whenever an interrupt is generated with a higher priority than
+what the current execution priority, then the ongoing execution flow will be
+suspended and execution continues at a special function called an <strong>interrupt handler</strong>...</p>
+<h2 id="interrupt-handler">Interrupt handler</h2>
+<p>An interrupt handler is a special <strong>function</strong> which is
+designed to handle one or multiple of the interrupt types an interrupt controller can
+support. During the execution of an interrupt handler the regular program
+execution is suspended and all processing resources are dedicated to the interrupt
+handler. Most interrupt controllers are so called <strong>nested interrupt
+controllers</strong> which means that the execution of an interrupt handler can also be
+suspended to work on an even higher priority interrupt, should one occur.</p>
+<p>As you can imagine, in a system where multiple priority levels exist, this can
+be problematic. If a part of the program is working with a resource, gets
+suspended and then an interrupt handler takes over and works with the same
+resource, this can easily cause <strong>race conditions</strong>.</p>
+<p>There're multiple ways around this and we'll talk about this later but for now
+I'll briefly mention the two simplest solution for single-core systems
+(multi-core systems can execute code in parallel which causes additional problems):</p>
+<ul>
+<li>Let everything run on the same priority: Without preemption there can't be
+data races (between interrupt handlers, at least)</li>
+<li>Disable interrupts temporarily. This is called a Critical Section (or CS) and
+we'll see this a few times in a bit.</li>
+</ul>
+<p>At the end of the interrupt handler, execution will continue at the last suspension point.</p>
+<h1 id="resource-sharing">Resource sharing</h1>
+<p>There're essentially two pieces of resources you might you might want to &quot;share&quot;
+between interrupt handlers and regular code. It is essential to appropriately
+manage access from different parts of the program to them, especially for a
+language like Rust which takes safety very seriously.</p>
+<h2 id="resource-types">Resource types</h2>
+<p>There're two important classes of data which we need to consider:</p>
+<h3 id="data">Data</h3>
+<p>Data can be any structure located at some address in random access memory. Those can be simply variables
+but also more complex structures like buffers where data piles up until it can
+be processed by a different piece of code.</p>
+<h3 id="peripherals">Peripherals</h3>
+<p>In typical micro controllers all peripherals are accessible via memory mapped
+addresses which means that these magic addresses do interact directly with
+hardware when written to or read from. </p>
+<h2 id="access-management">Access management</h2>
+<p>There're 3 essential mechanisms to manage access to those resources:</p>
+<h3 id="uniqueness">Uniqueness</h3>
+<p>Every function, interrupt handler, memory address, etc. can only exist once. For
+the most part Rust already guarantees that this is the case, however it can not
+do this for raw pointers to memory addresses which is the reason why it is
+<strong>unsafe</strong> to dereference them into concrete types. However we <strong>do</strong> want to
+have access to those memory locations but still obtain unique handles to those
+resources which Rust will help us to deal with, so how do we do this?</p>
+<p>The trick is that we're mapping those memory mapped addresses into concrete
+types which give us the required abstraction to safely use those and in addition
+we wrap them into a singleton so it's only possible to (safely) obtain the whole
+set of resources exactly once and let the Rust compiler handle most of that for us.</p>
+<h3 id="sharing">Sharing</h3>
+<p>Usually sharing resources in Rust is simple, you just pass borrows around and
+the Rust borrow checker will ensure that the lifetimes of the borrowed resources
+are not mixed up and that a mutable borrow and a regular borrow are mutually
+exclusive.</p>
+<p>However things get more tricky if there're non-linear program flows involved as
+it is the case with threads and interrupt handlers. As soon as there's an
+external party involved which can interfere with program execution flow like a
+operating system scheduler or interrupt controller, all shared resources require
+special protection which know how to deal with a particular case. For threads we
+have the <code>Sync</code> trait to cover concurrent access however this assumes that there
+is an overseeing party which makes sure that some over-the-top guarantees are
+upheld, however there're cases in embedded where this cannot not work.</p>
+<h3 id="moving">Moving</h3>
+<p>Similarly to sharing, moving now becomes a problem because the Rust compiler
+cannot track resources which are supposed to move into e.g. an interrupt handler.
+To the Rust compilers' eye those are not even part of <strong>the</strong> program itself but
+more a kind of standalone functions which are never even called and for some weird
+reason just happen to be defined in the same code base are the &quot;real&quot; program.
+Silly developers!</p>
+<p>So special precautions need to be applied to a resource which is initialized in
+once part of the &quot;real&quot; program but then supposed to move to a different
+location which is not seen as part of the &quot;real&quot; program but a weird function
+which seemingly unused.</p>
+<h1 id="implementation-approaches">Implementation approaches</h1>
+<p>Over the last couple of years a few mechanisms have been developed and evolved
+to deal with the implementation and handling of the before mentioned shenanigans
+in a sane way.</p>
+<p>For the rest of the post I will look at different approaches to handle
+interrupts, share and move resources. For this I've developed a simple example
+application for a Cortex-M0 MCU and we will look at the different
+implementations with the different approaches, compare the generated code sizes
+and I will give you my opinion about the pros and cons of the various methods.</p>
+<p>So this is what the end result will have to look like:</p>
+<p><video src="Nucleo_flashing.mp4" loop controls></video></p>
+<p>All of the code can be found in the <a href="https://github.com/therealprof/interrupt-comparison">interrupt-comparison</a> repo under the
+<code>flashing</code> workspace.</p>
+<p>So these are the contenders:</p>
+<h2 id="cortex-m-rt-with-delay">Cortex-m-rt with delay</h2>
+<p>This is almost the most basic approach one could take without interrupts or an
+kind of sharing and thus our primitive &quot;baseline&quot;:</p>
+<ul>
+<li>Set up the hardware and a timer</li>
+<li>Busy-wait for the timer to expire</li>
+<li>Turn LED on or off</li>
+</ul>
+<h3 id="code">Code</h3>
+<pre data-lang="rust" class="language-rust "><code class="language-rust" data-lang="rust">#![no_main]
+#![no_std]
+
+use panic_halt as _;
+use stm32f0xx_hal::{delay::Delay, prelude::*, stm32};
+use cortex_m::peripheral::Peripherals;
+use cortex_m_rt::entry;
+
+#[entry]
+fn main() -&gt; ! {
+    if let (Some(mut p), Some(cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
+        let mut state: u8 = 0;
+
+        let (mut led, mut delay) = cortex_m::interrupt::free(|cs| {
+            &#x2F;&#x2F; Configure clock to 48 MHz (i.e. the maximum) and freeze it
+            let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&amp;mut p.FLASH);
+
+            &#x2F;&#x2F; Obtain resources from GPIO port A
+            let gpioa = p.GPIOA.split(&amp;mut rcc);
+
+            &#x2F;&#x2F; (Re-)configure PA5 as output
+            let led = gpioa.pa5.into_push_pull_output(cs);
+
+            &#x2F;&#x2F; Get delay provider
+            let delay = Delay::new(cp.SYST, &amp;rcc);
+
+            (led, delay)
+        });
+
+        loop {
+            if state &lt; 10 {
+                &#x2F;&#x2F; Turn off the LED
+                led.set_low().ok();
+                state += 1;
+            } else {
+                &#x2F;&#x2F; Turn on the LED
+                led.set_high().ok();
+                state = 0;
+            }
+            delay.delay_ms(100_u16);
+        }
+    }
+
+    loop {
+        continue;
+    }
+}
+</code></pre>
+<h3 id="binary-results">Binary results</h3>
+<h4 id="optimized">Optimized</h4>
+<pre><code>Bloat for example flashing_delay
+File  .text Size          Crate Name
+0.2%  74.5% 328B flashing_delay flashing_delay::__cortex_m_rt_main
+0.0%  14.5%  64B    cortex_m_rt Reset
+0.0%   1.4%   6B      [Unknown] main
+0.0%   0.5%   2B    cortex_m_rt HardFault_
+0.0%   0.5%   2B    cortex_m_rt DefaultPreInit
+0.0%   0.5%   2B    cortex_m_rt DefaultHandler_
+0.0%   0.0%   0B                And 0 smaller methods. Use -n N to show more.
+0.3% 100.0% 440B                .text section size, the file size is 154.7KiB
+
+Section sizes:
+   text    data     bss     dec     hex filename
+    632       0       4     636     27c flashing_delay
+</code></pre>
+<h4 id="unoptimized">Unoptimized</h4>
+<pre><code>Bloat for example flashing_delay
+File  .text   Size         Crate Name
+0.5%  15.2% 1.4KiB stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze
+0.2%   6.1%   592B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock
+0.2%   5.0%   482B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_pll
+0.1%   2.9%   280B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+0.1%   2.8%   276B stm32f0xx_hal stm32f0xx_hal::gpio::gpioa::PA5&lt;MODE&gt;::into_push_pull_output
+0.1%   2.1%   206B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+0.1%   2.1%   204B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+0.1%   1.9%   180B stm32f0xx_hal &lt;stm32f0xx_hal::delay::Delay as embedded_hal::blocking::delay::DelayUs&lt;u32&gt;&gt;::delay_us
+0.1%   1.9%   180B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+0.1%   1.7%   162B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_pll::{{closure}}
+1.7%  57.8% 5.5KiB               And 109 smaller methods. Use -n N to show more.
+3.0% 100.0% 9.5KiB               .text section size, the file size is 312.7KiB
+
+Section size:
+   text    data     bss     dec     hex filename
+  11628       0       4   11632    2d70 flashing_delay
+</code></pre>
+<h3 id="pros">Pros</h3>
+<ul>
+<li>Doesn't get any simpler than that</li>
+</ul>
+<h3 id="cons">Cons</h3>
+<ul>
+<li>Only useful to build simple reactive systems, no hard real-time possible</li>
+<li>Asynchronous handling is really tedious</li>
+</ul>
+<h2 id="cortex-m-rt-with-interrupts-and-moved-resources">Cortex-m-rt with interrupts and moved resources</h2>
+<p>So compared to our baseline, here we'll also:</p>
+<ul>
+<li>Explicitly set up the interrupt handling</li>
+<li>Define a <code>Mutex</code> protected resource for the LED so we can use the hardware
+safely from the interrupt handler</li>
+<li>Define static resources in our interrupt handler which exclusively are
+accessible from there</li>
+<li>Move out the LED pin from the <code>Mutex</code> protected resource into our local static
+resource on first execution of the interrupt handler</li>
+</ul>
+<h3 id="code-1">Code</h3>
+<pre data-lang="rust" class="language-rust "><code class="language-rust" data-lang="rust">#![no_main]
+#![no_std]
+
+use panic_halt as _;
+use stm32f0xx_hal::{gpio::*, prelude::*, stm32};
+use cortex_m::{interrupt::Mutex, peripheral::syst::SystClkSource::Core, Peripherals};
+use cortex_m_rt::{entry, exception};
+use core::cell::RefCell;
+
+&#x2F;&#x2F; Mutex protected structure for our shared GPIO pin
+static GPIO: Mutex&lt;RefCell&lt;Option&lt;flashing::LEDPIN&gt;&gt;&gt; = Mutex::new(RefCell::new(None));
+
+#[entry]
+fn main() -&gt; ! {
+    if let (Some(mut p), Some(mut cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
+        cortex_m::interrupt::free(move |cs| {
+            &#x2F;&#x2F; Configure clock to 48 MHz (i.e. the maximum) and freeze it
+            let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&amp;mut p.FLASH);
+
+            &#x2F;&#x2F; Get access to individual pins in the GPIO port
+            let gpioa = p.GPIOA.split(&amp;mut rcc);
+
+            &#x2F;&#x2F; (Re-)configure the pin connected to our LED as output
+            let led = gpioa.pa5.into_push_pull_output(cs);
+
+            &#x2F;&#x2F; Transfer GPIO into a shared structure
+            *GPIO.borrow(cs).borrow_mut() = Some(led);
+
+            &#x2F;&#x2F; Set source for SysTick counter, here full operating frequency (== 48MHz)
+            cp.SYST.set_clock_source(Core);
+
+            &#x2F;&#x2F; Set reload value, i.e. timer delay 48 MHz&#x2F;4 Mcounts == 12Hz or 83ms
+            cp.SYST.set_reload(4_000_000 - 1);
+
+            &#x2F;&#x2F; Start counting
+            cp.SYST.enable_counter();
+
+            &#x2F;&#x2F; Enable interrupt generation
+            cp.SYST.enable_interrupt();
+        });
+    }
+
+    loop {
+        continue;
+    }
+}
+
+&#x2F;&#x2F; Define an exception handler, i.e. function to call when exception occurs. Here, if our SysTick
+&#x2F;&#x2F; timer generates an exception the following handler will be called
+#[exception]
+fn SysTick() -&gt; () {
+    &#x2F;&#x2F; Our moved LED pin
+    static mut LED: Option&lt;flashing::LEDPIN&gt; = None;
+
+    &#x2F;&#x2F; Exception handler state variable
+    static mut STATE: u8 = 0;
+
+    &#x2F;&#x2F; If LED pin was moved into the exception handler, just use it
+    if let Some(led) = LED {
+        &#x2F;&#x2F; Check state variable, keep LED off most of the time and turn it on every 10th tick
+        if *STATE &lt; 10 {
+            &#x2F;&#x2F; Turn off the LED
+            led.set_low().ok();
+
+            &#x2F;&#x2F; And now increment state variable
+            *STATE += 1;
+        } else {
+            &#x2F;&#x2F; Turn on the LED
+            led.set_high().ok();
+
+            &#x2F;&#x2F; And set new state variable back to 0
+            *STATE = 0;
+        }
+    }
+    &#x2F;&#x2F; Otherwise move it out of the Mutex protected shared region into our exception handler
+    else {
+        &#x2F;&#x2F; Enter critical section
+        cortex_m::interrupt::free(|cs| {
+            &#x2F;&#x2F; Move LED pin here, leaving a None in its place
+            LED.replace(GPIO.borrow(cs).replace(None).unwrap());
+        });
+    }
+}
+</code></pre>
+<h3 id="binary-results-1">Binary results</h3>
+<h4 id="optimized-1">Optimized</h4>
+<pre><code>Bloat for example flashing_rt_move
+File  .text Size            Crate Name
+0.2%  52.9% 296B flashing_rt_move flashing_rt_move::__cortex_m_rt_main
+0.1%  22.9% 128B        [Unknown] SysTick
+0.0%  11.4%  64B      cortex_m_rt Reset
+0.0%   1.1%   6B              std core::result::unwrap_failed
+0.0%   1.1%   6B              std core::panicking::panic_fmt
+0.0%   1.1%   6B              std core::panicking::panic
+0.0%   1.1%   6B        [Unknown] main
+0.0%   0.4%   2B      cortex_m_rt HardFault_
+0.0%   0.4%   2B       panic_halt rust_begin_unwind
+0.0%   0.4%   2B      cortex_m_rt DefaultPreInit
+0.0%   0.4%   2B      cortex_m_rt DefaultHandler_
+0.0%   0.0%   0B                  And 0 smaller methods. Use -n N to show more.
+0.3% 100.0% 560B                  .text section size, the file size is 169.3KiB
+
+Section sizes:
+   text    data     bss     dec     hex filename
+    796       0      12     808     328 flashing_rt_move
+</code></pre>
+<h4 id="unoptimized-1">Unoptimized</h4>
+<pre><code>Bloat for example flashing_rt_move
+File  .text    Size         Crate Name
+0.4%  12.0%  1.4KiB stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze
+0.3%   9.6%  1.1KiB           std core::fmt::Formatter::pad
+0.2%   4.8%    592B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock
+0.1%   3.9%    482B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_pll
+0.1%   2.3%    280B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+0.1%   2.3%    276B stm32f0xx_hal stm32f0xx_hal::gpio::gpioa::PA5&lt;MODE&gt;::into_push_pull_output
+0.1%   1.7%    210B           std core::ptr::swap_nonoverlapping_bytes
+0.1%   1.7%    206B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+0.1%   1.7%    204B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+0.0%   1.5%    180B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+1.9%  58.0%  6.9KiB               And 150 smaller methods. Use -n N to show more.
+3.3% 100.0% 12.0KiB               .text section size, the file size is 357.7KiB
+
+Section size:
+   text    data     bss     dec     hex filename
+  14180       0      12   14192    3770 flashing_rt_move
+</code></pre>
+<h3 id="pros-1">Pros</h3>
+<ul>
+<li>Easy to understand and straight-forward &quot;text-book&quot; syntax</li>
+</ul>
+<h3 id="cons-1">Cons</h3>
+<ul>
+<li>Requires use of <code>static</code> <code>Mutex</code> which have annoyingly exact type specification requirements</li>
+<li><code>Mutex</code> require critical sections to access the values which block all interrupt processing</li>
+</ul>
+<h2 id="irq"><code>IRQ</code></h2>
+<p>This uses the <a href="https://crates.io/crates/irq">irq</a> crate from Jonas Schievink which takes a slightly different
+approach than <a href="https://crates.io/crates/cortex-m-rt">cortex-m-rt</a> but still uses it under the hood to do the interrupt
+handling. Instead of defining the interrupt handlers manually the <code>irq</code> crate
+provides a <code>scoped_interrupts</code> macro to define the interrupts which are turned
+into regular <code>cortex-m-rt</code> interrupt handler functions. The real handlers are
+defined as closures within the main program flow and parsed to a special <code>scope</code>
+function while will register the real handler closure. As long as the <code>scope</code> is
+active any triggered interrupt handler internally created by <code>scoped_interrupts</code>
+will call the registered closure to do the real processing.</p>
+<h3 id="code-2">Code</h3>
+<pre data-lang="rust" class="language-rust "><code class="language-rust" data-lang="rust">#![no_main]
+#![no_std]
+
+use panic_halt as _;
+
+use stm32f0xx_hal::{gpio::*, prelude::*, stm32};
+
+use cortex_m::{peripheral::syst::SystClkSource::Core, Peripherals};
+use cortex_m_rt::{entry, exception};
+use irq::{handler, scope, scoped_interrupts};
+
+&#x2F;&#x2F; Hook `SysTick` using the `#[exception]` attribute
+scoped_interrupts! {
+    enum Exception {
+        SysTick,
+    }
+
+    use #[exception];
+}
+
+#[entry]
+fn main() -&gt; ! {
+    if let (Some(mut p), Some(mut cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
+        let mut led = cortex_m::interrupt::free(move |cs| {
+            &#x2F;&#x2F; Configure clock to 48 MHz (i.e. the maximum) and freeze it
+            let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&amp;mut p.FLASH);
+
+            &#x2F;&#x2F; Get access to individual pins in the GPIO port
+            let gpioa = p.GPIOA.split(&amp;mut rcc);
+
+            &#x2F;&#x2F; (Re-)configure the pin connected to our LED as output
+            let led = gpioa.pa5.into_push_pull_output(cs);
+
+            &#x2F;&#x2F; Set source for SysTick counter, here full operating frequency (== 48MHz)
+            cp.SYST.set_clock_source(Core);
+
+            &#x2F;&#x2F; Set reload value, i.e. timer delay 48 MHz&#x2F;4 Mcounts == 12Hz or 83ms
+            cp.SYST.set_reload(4_000_000 - 1);
+
+            &#x2F;&#x2F; Start counting
+            cp.SYST.enable_counter();
+
+            &#x2F;&#x2F; Enable interrupt generation
+            cp.SYST.enable_interrupt();
+
+            led
+        });
+
+        &#x2F;&#x2F; State variable
+        let mut state: u8 = 0;
+
+        handler!(
+            systick = || {
+                &#x2F;&#x2F; Check state variable, keep LED off most of the time and turn it on every 10th tick
+                if state &lt; 10 {
+                    &#x2F;&#x2F; Turn off the LED
+                    led.set_low().ok();
+
+                    &#x2F;&#x2F; And now increment state variable
+                    state += 1;
+                } else {
+                    &#x2F;&#x2F; Turn on the LED
+                    led.set_high().ok();
+
+                    &#x2F;&#x2F; And set new state variable back to 0
+                    state = 0;
+                }
+            }
+        );
+
+        &#x2F;&#x2F; Create a scope and register the handlers
+        scope(|scope| {
+            scope.register(Exception::SysTick, systick);
+
+            loop {
+                continue;
+            }
+        });
+    }
+
+    loop {
+        continue;
+    }
+}
+</code></pre>
+<h3 id="binary-results-2">Binary results</h3>
+<h4 id="optimized-2">Optimized</h4>
+<pre><code>Bloat for example flashing_irq
+File  .text Size        Crate Name
+0.2%  55.7% 312B flashing_irq flashing_irq::__cortex_m_rt_main
+0.0%  11.4%  64B  cortex_m_rt Reset
+0.0%   7.1%  40B flashing_irq flashing_irq::__cortex_m_rt_main::{{closure}}
+0.0%   7.1%  40B    [Unknown] SysTick
+0.0%   6.4%  36B          std core::ops::function::FnOnce::call_once{{vtable.shim}}
+0.0%   1.1%   6B          std core::panicking::panic_fmt
+0.0%   1.1%   6B          std core::panicking::panic
+0.0%   1.1%   6B    [Unknown] main
+0.0%   0.4%   2B  cortex_m_rt HardFault_
+0.0%   0.4%   2B   panic_halt rust_begin_unwind
+0.0%   0.4%   2B  cortex_m_rt DefaultPreInit
+0.0%   0.4%   2B  cortex_m_rt DefaultHandler_
+0.0%   0.4%   2B          std core::ptr::real_drop_in_place
+0.0%   0.0%   0B              And 0 smaller methods. Use -n N to show more.
+0.3% 100.0% 560B              .text section size, the file size is 162.4KiB
+
+Section sizes:
+   text    data     bss     dec     hex filename
+    808       0      12     820     334 flashing_irq
+</code></pre>
+<h4 id="unoptimized-2">Unoptimized</h4>
+<pre><code>Bloat for example flashing_irq
+File  .text   Size         Crate Name
+0.4%  14.7% 1.4KiB stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze
+0.2%   5.9%   592B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock
+0.1%   4.8%   482B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_pll
+0.1%   2.8%   280B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+0.1%   2.8%   276B stm32f0xx_hal stm32f0xx_hal::gpio::gpioa::PA5&lt;MODE&gt;::into_push_pull_output
+0.1%   2.1%   206B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+0.1%   2.0%   204B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+0.1%   1.8%   180B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+0.0%   1.6%   162B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_pll::{{closure}}
+0.0%   1.5%   148B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+1.8%  59.3% 5.8KiB               And 121 smaller methods. Use -n N to show more.
+3.0% 100.0% 9.8KiB               .text section size, the file size is 321.0KiB
+
+Section size:
+   text    data     bss     dec     hex filename
+  12148       0       8   12156    2f7c flashing_irq
+</code></pre>
+<h3 id="pros-2">Pros</h3>
+<ul>
+<li>All data is in the same single scope so rustc can do its work properly</li>
+<li>No overhead for resource transfer and local storage</li>
+<li>Can change interrupt handlers on the fly</li>
+</ul>
+<h3 id="cons-2">Cons</h3>
+<ul>
+<li>Overhead for the handler indirection</li>
+</ul>
+<h2 id="cortex-m-rtfm">cortex-m-rtfm</h2>
+<p><a href="https://crates.io/crates/cortex-m-rtfm">cortex-m-rtfm</a> is a very clever toolbox combining a macro based domain specific
+language annotation with static analysis to provide ideal results with
+calculable worst time interrupt execution times and lock-free operation. </p>
+<h3 id="code-3">Code</h3>
+<pre data-lang="rust" class="language-rust "><code class="language-rust" data-lang="rust">#![no_main]
+#![no_std]
+
+use panic_halt as _;
+use stm32f0xx_hal::{gpio::*, prelude::*, stm32};
+use cortex_m::peripheral::syst::SystClkSource::Core;
+use rtfm::app;
+
+#[app(device = crate::stm32, peripherals = true)]
+const APP: () = {
+    &#x2F;&#x2F; Late resources
+    struct Resources {
+        led: flashing::LEDPIN,
+    }
+
+    #[init]
+    fn init(cx: init::Context) -&gt; init::LateResources {
+        &#x2F;&#x2F; Cortex-M peripherals
+        let mut core = cx.core;
+
+        &#x2F;&#x2F; Device specific peripherals
+        let mut device = cx.device;
+
+        &#x2F;&#x2F; Configure clock to 48 MHz (i.e. the maximum) and freeze it
+        let mut rcc = device
+            .RCC
+            .configure()
+            .sysclk(48.mhz())
+            .freeze(&amp;mut device.FLASH);
+
+        &#x2F;&#x2F; Get access to individual pins in the GPIO port
+        let gpioa = device.GPIOA.split(&amp;mut rcc);
+
+        let led = cortex_m::interrupt::free(move |cs| {
+            &#x2F;&#x2F; (Re-)configure the pin connected to our LED as output
+            gpioa.pa5.into_push_pull_output(cs)
+        });
+
+        &#x2F;&#x2F; Set source for SysTick counter, here full operating frequency (== 48MHz)
+        core.SYST.set_clock_source(Core);
+
+        &#x2F;&#x2F; Set reload value, i.e. timer delay 48 MHz&#x2F;4 Mcounts == 12Hz or 83ms
+        core.SYST.set_reload(4_000_000 - 1);
+
+        &#x2F;&#x2F; Start counting
+        core.SYST.enable_counter();
+
+        &#x2F;&#x2F; Enable interrupt generation
+        core.SYST.enable_interrupt();
+
+        init::LateResources { led }
+    }
+
+    &#x2F;&#x2F; Define an exception handler, i.e. function to call when exception occurs. Here, if our SysTick
+    &#x2F;&#x2F; timer generates an exception the following handler will be called
+    #[task(binds = SysTick, priority = 1, resources = [led])]
+    fn systick(c: systick::Context) {
+        &#x2F;&#x2F; Exception handler state variable
+        static mut STATE: u8 = 0;
+
+        &#x2F;&#x2F; If LED pin was moved into the exception handler, just use it
+        &#x2F;&#x2F; Check state variable, keep LED off most of the time and turn it on every 10th tick
+        if *STATE &lt; 10 {
+            &#x2F;&#x2F; Turn off the LED
+            c.resources.led.set_low().ok();
+
+            &#x2F;&#x2F; And now increment state variable
+            *STATE += 1;
+        } else {
+            &#x2F;&#x2F; Turn on the LED
+            c.resources.led.set_high().ok();
+
+            &#x2F;&#x2F; And set new state variable back to 0
+            *STATE = 0;
+        }
+    }
+};
+</code></pre>
+<h3 id="binary-results-3">Binary results</h3>
+<h4 id="optimized-3">Optimized</h4>
+<pre><code>Bloat for example flashing_rtfm
+File  .text Size       Crate Name
+0.1%  61.5% 236B   [Unknown] main
+0.0%  16.7%  64B cortex_m_rt Reset
+0.0%  10.4%  40B   [Unknown] SysTick
+0.0%   0.5%   2B cortex_m_rt HardFault_
+0.0%   0.5%   2B cortex_m_rt DefaultPreInit
+0.0%   0.5%   2B cortex_m_rt DefaultHandler_
+0.0%   0.0%   0B             And 0 smaller methods. Use -n N to show more.
+0.2% 100.0% 384B             .text section size, the file size is 154.8KiB
+
+Section sizes:
+   text    data     bss     dec     hex filename
+    576       0       4     580     244 flashing_rtfm
+</code></pre>
+<h4 id="unoptimized-3">Unoptimized</h4>
+<pre><code>Bloat for example flashing_rtfm
+File  .text    Size         Crate Name
+0.4%  12.8%  1.4KiB stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze
+0.3%   8.9%   1018B           std core::fmt::Formatter::pad_integral
+0.2%   5.2%    592B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock
+0.1%   4.2%    482B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_pll
+0.1%   2.8%    320B           std core::fmt::num::imp::fmt_u32
+0.1%   2.4%    280B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+0.1%   2.4%    276B stm32f0xx_hal stm32f0xx_hal::gpio::gpioa::PA5&lt;MODE&gt;::into_push_pull_output
+0.1%   1.8%    206B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+0.1%   1.8%    204B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+0.1%   1.8%    204B      cortex_m cortex_m::peripheral::scb::&lt;impl cortex_m::peripheral::SCB&gt;::set_priority::{{closure}}
+1.9%  55.5%  6.2KiB               And 117 smaller methods. Use -n N to show more.
+3.4% 100.0% 11.2KiB               .text section size, the file size is 331.1KiB
+
+Section size:
+   text    data     bss     dec     hex filename
+  14100       0       4   14104    3718 flashing_rtfm
+</code></pre>
+<h3 id="pros-3">Pros</h3>
+<ul>
+<li>Look ma! No locks!</li>
+<li>Extremely powerful possibilities, especially when different priorities are used</li>
+<li>Great compile time checks and guarantees</li>
+<li>Incredibly efficient binary code</li>
+</ul>
+<h3 id="cons-3">Cons</h3>
+<ul>
+<li>Custom syntax feels the least idiomatic of all approaches</li>
+<li>Additional implementation complexity even if the full functionality is not required</li>
+</ul>
+<h2 id="cmim-added-2020-03-06">cmim (<strong>Added 2020-03-06</strong>)</h2>
+<p><a href="https://crates.io/crates/cmim">cmim</a> is crate which aims to simplify the move of resources into an interrupt
+handler in order to avoid having to use a critical section to gain access to a
+resource protected by a <code>Mutex</code>. Unlike a <code>Mutex</code> it keeps internal track of
+the state of protected resource so it can handle accesses to it accordingly.</p>
+<h3 id="code-4">Code</h3>
+<pre data-lang="rust" class="language-rust "><code class="language-rust" data-lang="rust">#![no_main]
+#![no_std]
+
+use panic_halt as _;
+
+use stm32f0xx_hal::{gpio::*, prelude::*, stm32};
+
+use cortex_m::{peripheral::syst::SystClkSource::Core, Peripherals};
+use cortex_m_rt::{entry, exception};
+
+use cmim::{
+    Move,
+    Context,
+    Exception,
+};
+
+&#x2F;&#x2F; Mutex protected structure for our shared GPIO pin
+static GPIO: Move&lt;flashing::LEDPIN, stm32::Interrupt&gt; = Move::new_uninitialized(Context::Exception(Exception::SysTick));
+
+#[entry]
+fn main() -&gt; ! {
+    if let (Some(mut p), Some(mut cp)) = (stm32::Peripherals::take(), Peripherals::take()) {
+        cortex_m::interrupt::free(move |cs| {
+            &#x2F;&#x2F; Configure clock to 48 MHz (i.e. the maximum) and freeze it
+            let mut rcc = p.RCC.configure().sysclk(48.mhz()).freeze(&amp;mut p.FLASH);
+
+            &#x2F;&#x2F; Get access to individual pins in the GPIO port
+            let gpioa = p.GPIOA.split(&amp;mut rcc);
+
+            &#x2F;&#x2F; (Re-)configure the pin connected to our LED as output
+            let led = gpioa.pa5.into_push_pull_output(cs);
+
+            &#x2F;&#x2F; Transfer GPIO into a shared structure
+            GPIO.try_move(led).ok();
+
+            &#x2F;&#x2F; Set source for SysTick counter, here full operating frequency (== 48MHz)
+            cp.SYST.set_clock_source(Core);
+
+            &#x2F;&#x2F; Set reload value, i.e. timer delay 48 MHz&#x2F;4 Mcounts == 12Hz or 83ms
+            cp.SYST.set_reload(4_000_000 - 1);
+
+            &#x2F;&#x2F; Start counting
+            cp.SYST.enable_counter();
+
+            &#x2F;&#x2F; Enable interrupt generation
+            cp.SYST.enable_interrupt();
+        });
+    }
+
+    loop {
+        continue;
+    }
+}
+
+&#x2F;&#x2F; Define an exception handler, i.e. function to call when exception occurs. Here, if our SysTick
+&#x2F;&#x2F; timer generates an exception the following handler will be called
+#[exception]
+fn SysTick() -&gt; () {
+    &#x2F;&#x2F; Exception handler state variable
+    static mut STATE: u8 = 0;
+
+    GPIO.try_lock(|led| {
+        &#x2F;&#x2F; Check state variable, keep LED off most of the time and turn it on every 10th tick
+        if *STATE &lt; 10 {
+            &#x2F;&#x2F; Turn off the LED
+            led.set_low().ok();
+
+            &#x2F;&#x2F; And now increment state variable
+            *STATE += 1;
+        } else {
+            &#x2F;&#x2F; Turn on the LED
+            led.set_high().ok();
+
+            &#x2F;&#x2F; And set new state variable back to 0
+            *STATE = 0;
+        }
+    }).ok();
+}
+</code></pre>
+<h3 id="binary-results-4">Binary results</h3>
+<h4 id="optimized-4">Optimized</h4>
+<pre><code> Bloat for example flashing_cmim
+  File  .text Size         Crate Name
+  0.2%  61.2% 328B flashing_cmim flashing_cmim::__cortex_m_rt_main
+  0.1%  17.9%  96B     [Unknown] SysTick
+  0.0%  11.9%  64B   cortex_m_rt Reset
+  0.0%   1.1%   6B     [Unknown] main
+  0.0%   0.4%   2B   cortex_m_rt HardFault_
+  0.0%   0.4%   2B   cortex_m_rt DefaultPreInit
+  0.0%   0.4%   2B   cortex_m_rt DefaultHandler_
+  0.0%   0.0%   0B               And 0 smaller methods. Use -n N to show more.
+  0.3% 100.0% 536B               .text section size, the file size is 163.0KiB
+
+  Section sizes:
+     text    data     bss     dec     hex filename
+      728       0       4     732     2dc flashing_cmim
+</code></pre>
+<h4 id="unoptimized-4">Unoptimized</h4>
+<pre><code>  Bloat for example flashing_cmim
+  File  .text    Size         Crate Name
+  0.4%  12.6%  1.4KiB stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze
+  0.2%   5.1%    592B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock
+  0.1%   4.1%    482B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_pll
+  0.1%   2.7%    316B      stm32f0? &lt;stm32f0::stm32f0x2::Interrupt as bare_metal::Nr&gt;::nr
+  0.1%   2.4%    280B stm32f0xx_hal stm32f0xx_hal::rcc::CFGR::freeze::{{closure}}
+  0.1%   2.4%    276B stm32f0xx_hal stm32f0xx_hal::gpio::gpioa::PA5&lt;MODE&gt;::into_push_pull_output
+  0.1%   2.0%    236B          cmim cmim::Move&lt;T,I&gt;::try_lock
+  0.1%   1.8%    216B      cortex_m cortex_m::peripheral::scb::&lt;impl cortex_m::peripheral::SCB&gt;::vect_active
+  0.1%   1.8%    210B           std core::ptr::swap_nonoverlapping_bytes
+  0.1%   1.8%    206B stm32f0xx_hal stm32f0xx_hal::rcc::inner::enable_clock::{{closure}}
+  2.1%  63.0%  7.2KiB               And 136 smaller methods. Use -n N to show more.
+  3.3% 100.0% 11.4KiB               .text section size, the file size is 345.6KiB
+
+  Section size:
+     text    data     bss     dec     hex filename
+    13816       4       4   13824    3600 flashing_cmim
+</code></pre>
+<h3 id="pros-4">Pros</h3>
+<ul>
+<li>No panic code in binary</li>
+<li>Easy and straight forward to use</li>
+</ul>
+<h3 id="cons-4">Cons</h3>
+<ul>
+<li>It's not quite obvious what happens behind the scenes and under which conditions this would fall apart</li>
+</ul>
+<h1 id="epilog">Epilog</h1>
+<p>Exploring the various options to use interrupts was quite a fun ride and also
+quite enlightening. I've spent a bit of time to look under the hood of the
+various approaches in order to understand what they're doing and whether there
+might be potential to combine approaches or improve on them for future work.</p>
+<p>As can be seen each of the approaches comes with a their own set of drawbacks
+and it would be great if there was a way to combine them in a way that combines
+the best of all worlds: The straight-forwardness of <code>cortex-m</code> with the
+simplicity of <code>irq</code> but the power, efficiency and compile time guarantees of
+<code>cortex-m-rtfm</code>.</p>
+<p>Also it would be great to have an approach which covers more architectures than
+ARM Cortex-M. However to cover all of Cortex-M I specifically opted to use a
+Cortex-M0 which lacks e.g. compare-and-swap options and thus resembles the
+lowest possible denominator for this particular vendor.</p>
+<p>You can find all the code and tools used to conduct the tests in my repository
+at <a href="https://github.com/therealprof/interrupt-comparison">interrupt-comparison</a>. Feel free to experiment and let me know your
+experiences. Also let me know if you have another approach you feel should be
+covered here.</p>
+<p><del>I was trying to include <a href="https://crates.io/crates/cmim">cmim</a> in this comparison but I failed to get the
+<code>SysTick</code> exception to work and failed. If this gets addressed I might update
+this blog post with another implementation.</del></p>
+<p><strong>Update 2020-03-06:</strong> <a href="https://crates.io/crates/cmim">cmim</a> is now included</p>
+<p>Thanks for sticking with me for this long and I hope to see you another time around.</p>
+
+      
+  </article>
+</section>
+
+       
+
+      <footer>
+        
+          
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+          
+<ul class="social_list foot_list" >
+    
+    <li class="button extra_small font_faint"><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+    
+    
+    <li class="button extra_small font_faint"><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="button extra_small font_faint"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+    
+</ul>
+
+        
+      </footer>
+    </body>
+</html>

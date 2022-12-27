@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+        <!-- SEO -->
+        
+        <title> Rust Roadmap 2021: Adding a useful dev mode and making it the default | The subconscious mumblings of therealprof </title>
+        
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport"  content="width=device-width, initial-scale=1.0, maximum-scale=1" >
+
+        <!--  css -->
+        <link rel="stylesheet"  href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/ergo.css" >
+
+        <!-- fonts -->
+        <!-- preload  -->
+        <link rel="preload" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway" as="style">
+        <link rel="preload"  href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous" as="style" >
+        <!-- load -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"  integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+      
+    </head>
+
+    <body>
+      
+        
+<input type="checkbox" id="openSidebarMenu" class="openSidebarMenu">
+<label class="menu cross menu--1" for="openSidebarMenu">
+    <svg viewBox="0 0 75 75" xmlns="https://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="30" />
+        <path class="line--1" d="M0 40h62c13 0 6 28-4 18L35 35" />
+        <path class="line--2" d="M0 50h70" />
+        <path class="line--3" d="M0 60h62c13 0 6-28-4-18L35 65" />
+    </svg>
+</label>
+
+<div id="sidebarMenu">
+    <div class="menu_wrapper">
+        <ul class="sidebarMenuInner">
+            <li>
+                <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" >The subconscious mumblings of therealprof</a>
+                <div class="menu_div" ></div>
+            </li>
+            
+            <li><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+            
+            
+            <li><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <li><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+            
+        </ul>
+    </div>
+</div>
+
+      
+
+      
+<nav id="overlord" class="overlord" >
+  
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+</nav>
+
+<section class="post_container">
+  <article>
+    
+      <h1 class="article_title"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;blog&#x2F;roadmap-2021-usable-dev-mode&#x2F;" id="article_link">Rust Roadmap 2021: Adding a useful dev mode and making it the default</a></h1>
+      
+<ul class="frontmatter frontmatter_page" id="frontmatter">
+    <li>
+        <time class="article_time"  datetime="2020-09-07">September 07, 2020</time>
+    </li>
+    <span class="dotDivider"></span>
+    <li> 495 words </li>
+    <span class="dotDivider" ></span>
+    <li> 3 min </li>
+</ul>
+
+      <p>In this blog entry following the <strong><a href="https://blog.rust-lang.org/2020/09/03/Planning-2021-Roadmap.html">Call for Rust 2021 Roadmap items</a></strong>, I
+shall layout my vision for giving Rust the ability to create debuggable
+binaries which will also fit in the flash of a microcontroller.</p>
+<span id="continue-reading"></span><h1 id="motivation">Motivation</h1>
+<p>This request has multiple motivations but following the <strong><a href="https://blog.rust-lang.org/2020/09/03/Planning-2021-Roadmap.html">Call for Rust 2021
+Roadmap items</a></strong> rules I'm notating them in the agile user story way:</p>
+<ul>
+<li>As an embedded developer I would like to be able to create debuggable applications</li>
+<li>As an embedded developer I would also like to be able to create applications
+which fit into the very limited flash available to microcontrollers</li>
+</ul>
+<p>So let me give you a bit more background about the status quo and what I mean
+by those two stories before giving you my ideas how to address them.</p>
+<h2 id="debuggable-applications-which-fit-into-flash">Debuggable applications which fit into flash</h2>
+<p>The &quot;problem&quot; with Rust applications in general is that once even just the
+bare-minimum optimisations are enabled, the compiler will completely
+restructure the whole application in a way that makes debugging hard or even
+impossible.</p>
+<p>On the other hand, if optimisations are completely disabled, <code>rustc</code> will
+happily churn out code which is so highly inefficient and large that it either
+won't fit in the available flash space or be so slow that crucial deadlines can
+not be met (like USB handling) and the application will simply fail; quite
+often those two issues also rear their ugly heads at the same time. It also
+introduces <code>panic</code>ing branches into code which is not even supposed to be
+anything more than a compiler hint, cf. <a href="https://github.com/rust-lang/rust/issues/68208">Issue 68208</a>.</p>
+<p>Other languages do a lot better by creating more efficient code without any
+optimisations but they also offer optimisation levels which don't or only
+lightly effect the debugability of an application built with them.</p>
+<p>In addition to the code generation problems it's also a big stumbling block and
+source of surprise and frustration that <code>rustc</code> uses <strong>dev</strong> mode by default,
+often creating unusable binaries or even just errors.</p>
+<p>Imagine exploring <strong>Rust</strong> coming from <strong>C</strong> and seeing that the most basic
+program suddenly takes up many kB of precious flash instead of a few hundred
+Bytes when compiled with default flags (and including a fixed overhead of a few
+hundred bytes):</p>
+<pre><code>   text	   data	    bss	    dec	    hex	filename
+    532	      0	      0	    532	    214	miniblink.elf
+</code></pre>
+<p>vs.</p>
+<pre><code>   text    data     bss     dec     hex filename
+   9976       0       4    9980    26fc blinky
+</code></pre>
+<h1 id="implementation-ideas">Implementation ideas</h1>
+<p>I think it should be possible to come up with a set of debugging friendly basic
+optimisations applied at <code>opt-level=g</code> which operate similar to clang's or
+gcc's <code>-Og</code>. Those are similar to <code>opt-level=1</code> but disable debugging harming
+optimisations. Furthermore this level should be the default for <code>dev</code> mode to
+make Rust in embedded scenarios useful by default!</p>
+<p>Thanks for your attention and hope to blog to y'all soon!</p>
+
+      
+  </article>
+</section>
+
+       
+
+      <footer>
+        
+          
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+          
+<ul class="social_list foot_list" >
+    
+    <li class="button extra_small font_faint"><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+    
+    
+    <li class="button extra_small font_faint"><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="button extra_small font_faint"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+    
+</ul>
+
+        
+      </footer>
+    </body>
+</html>

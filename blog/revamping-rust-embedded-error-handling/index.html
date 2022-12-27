@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+        <!-- SEO -->
+        
+        <title> Revamping Rust Embedded Error Handling － a case for embedded-error | The subconscious mumblings of therealprof </title>
+        
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport"  content="width=device-width, initial-scale=1.0, maximum-scale=1" >
+
+        <!--  css -->
+        <link rel="stylesheet"  href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/ergo.css" >
+
+        <!-- fonts -->
+        <!-- preload  -->
+        <link rel="preload" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway" as="style">
+        <link rel="preload"  href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous" as="style" >
+        <!-- load -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"  integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+      
+    </head>
+
+    <body>
+      
+        
+<input type="checkbox" id="openSidebarMenu" class="openSidebarMenu">
+<label class="menu cross menu--1" for="openSidebarMenu">
+    <svg viewBox="0 0 75 75" xmlns="https://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="30" />
+        <path class="line--1" d="M0 40h62c13 0 6 28-4 18L35 35" />
+        <path class="line--2" d="M0 50h70" />
+        <path class="line--3" d="M0 60h62c13 0 6-28-4-18L35 65" />
+    </svg>
+</label>
+
+<div id="sidebarMenu">
+    <div class="menu_wrapper">
+        <ul class="sidebarMenuInner">
+            <li>
+                <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" >The subconscious mumblings of therealprof</a>
+                <div class="menu_div" ></div>
+            </li>
+            
+            <li><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+            
+            
+            <li><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <li><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+            
+        </ul>
+    </div>
+</div>
+
+      
+
+      
+<nav id="overlord" class="overlord" >
+  
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+</nav>
+
+<section class="post_container">
+  <article>
+    
+      <h1 class="article_title"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;blog&#x2F;revamping-rust-embedded-error-handling&#x2F;" id="article_link">Revamping Rust Embedded Error Handling － a case for embedded-error</a></h1>
+      
+<ul class="frontmatter frontmatter_page" id="frontmatter">
+    <li>
+        <time class="article_time"  datetime="2020-08-24">August 24, 2020</time>
+    </li>
+    <span class="dotDivider"></span>
+    <li> 1167 words </li>
+    <span class="dotDivider" ></span>
+    <li> 6 min </li>
+</ul>
+
+      <p>In this blog post we'll have a look at error handling in Rust embedded
+scenarios. How does this work at the moment, what are the user expectations
+and what can we do to make error handling future proof?</p>
+<span id="continue-reading"></span><h1 id="introduction">Introduction</h1>
+<p>There have been many great articles, discussions and talks about error handling
+Rust in the last few months. The ecosystem has made great progress on that
+front ever since the <code>std::error::Error</code> trait became powerful with the
+introduction of the <code>source</code> method in 1.30.0 and the <code>#[non_exhaustive]</code>
+attribute in 1.40.0. I'm really amazed about the fantastic work and would
+highly recommend to have a look at e.g. <a href="https://crates.io/crates/anyhow">anyhow</a> and <a href="https://crates.io/crates/thiserror">thiserror</a> to see some
+state of the art possibilities, if you're not familiar with those achievements.</p>
+<p><strong>BUT</strong> we're talking about embedded here and there're some notable differences
+to what is possible in the <code>std</code> world mentioned above. Some of these are:</p>
+<ul>
+<li>we're restricted to <code>no_std</code> in embedded, i.e. <code>libcore</code> instead of <code>libstd</code> and there's no <code>Error</code> trait in <code>libcore</code></li>
+<li>there's no allocator, so we cannot use <code>Box</code> or any other types requiring a heap</li>
+<li>we don't usually have an output medium, so all errors have to be machine read-/manageable instead of human-friendly</li>
+<li>error kinds need to be common across all dependencies and composable, &quot;surprise&quot; errors can only be dealt with in the worst possible way</li>
+<li>some common conditions which are not really errors are also signalled via the <code>Err</code> case in the <code>Result</code></li>
+</ul>
+<p>Of course it needs also to be possible to easily bridge the gap between
+<code>no_std</code> and <code>std</code> since devices like a Raspberry Pi should also be able to use
+embedded device drivers, so we should not stray to far away from known
+territory.</p>
+<h1 id="the-current-situation">The current situation</h1>
+<p>In embedded we achieve composability by relying on the traits provided by the
+<a href="https://crates.io/crates/embedded-hal">embedded-hal</a> crate. This provides an interface between HAL implementations
+providing the access to the hardware peripherals on one side and drivers and/or
+applications on the other side. In the current version most of the traits are
+fallible, in the upcoming version 1.0 there will only be fallible methods, so
+we will always have a <code>Result</code> returning us any errors or other conditions from
+the hardware peripherals or external components hooked up to those peripherals.</p>
+<p>However there's one slight snag: All error kinds are based on associated types
+defined inside the traits. Take the <code>serial::Read</code> trait for example:</p>
+<pre><code>pub trait Read&lt;Word&gt; {
+    &#x2F;&#x2F;&#x2F; Read error
+    type Error;
+
+    &#x2F;&#x2F;&#x2F; Reads a single word from the serial interface
+    fn read(&amp;mut self) -&gt; nb::Result&lt;Word, Self::Error&gt;;
+}
+</code></pre>
+<p>What this means is that the implementation defines its own error type and
+asssigns it as an associated type in its implementation. So every user of this
+trait needs to know exactly what the <code>Err</code> kind type is and be able to handle
+the relevant specific cases of that particular type, which is... not ideal.</p>
+<p>So within an application the <code>Result</code> handling is specific to the HAL impl it
+is using. This might be okay in a few cases because you don't care about the
+non-<code>Ok</code> case or you simply use wildcard handling for errors. Of course you
+could also create a <code>cfg</code>-gated features mess to adapt to each possible
+hardware abstraction your application is supposed to run on.</p>
+<p>But what if you want to write a generic driver which only depends those traits
+and does not even know which hardware it'll be running on and this particular
+driver requires to handle specific conditions which can only be signalled using
+the <code>Err</code> part? E.g. there're flash chips for the I2C bus which will return a
+<code>NACK</code> condition when they're currently busy processing a previous request. The
+driver would know what to do when that occurs but it cannot know about the
+condition, because it's part of a custom type only known to the HAL
+implementation. The only thing a driver can do is forward the <code>Err</code> to the
+application which might either not be able to cope with it in the context of
+the driver or run into the previously mentioned problem again.</p>
+<h1 id="how-to-deal-with-the-err-case-in-a-generic-way">How to deal with the <code>Err</code> case in a generic way?</h1>
+<p>In order to address this problem with arbitrary unknown <code>Err</code> cases, I've
+proposed and created a new crate called <a href="https://crates.io/crates/embedded-error">embedded-error</a>. The concept behind
+that is based on the very same principles used by <a href="https://doc.rust-lang.org/std/io/enum.ErrorKind.html">enum std::io::ErrorKind</a>,
+which are:</p>
+<ul>
+<li>provide an enumeration of simple and fixed error kinds</li>
+<li>use the <code>#[non_exhaustive]</code> attribute to allow for non-breaking additions of error kinds at any point in time</li>
+</ul>
+<p>In order to make it useful for embedded uses I introduced a few additional ideas:</p>
+<ul>
+<li>each category of peripheral gets they own dedicated set of error kinds</li>
+<li>each enumeration also contains a nested error kind <code>Impl</code> which is shared between different categories and used to signal implementation and/or environment specific problems</li>
+</ul>
+<p>This allows us to have dependable <code>Err</code> types which everyone knows and which
+are able to convey an exact message to the user of an <code>embedded-hal</code>
+implementation or driver and thus to handle errors efficiently and idependently
+of the target platform while being easily extendable at any point in the future
+whenever the need arises.</p>
+<h1 id="future-plans-for-embedded-error">Future plans for <code>embedded-error</code></h1>
+<p>At the moment it is mostly a proof of concept and does by far not cover all
+possible peripherals and error kinds. But that's okay because as mentioned we
+can add more types at any time and I'd highly encourage everyone to PR their
+favourite error kinds to the <a href="https://github.com/therealprof/embedded-error/">embedded-error repository</a>.</p>
+<p>I will also convert various HAL impls (like <a href="https://github.com/stm32-rs/stm32f0xx-hal/">stm32f0xx-hal</a> and
+<a href="https://github.com/stm32-rs/stm32f4xx-hal/">stm32f4xx-hal</a>, unless someone beats me to it 😉) to those error kinds because
+most of those custom error kinds are very rudimentatry. So at least from a
+documentation and naming perspective such a change makes a lot of sense even
+though we still have the associated type complication in <a href="https://crates.io/crates/embedded-hal">embedded-hal</a> for
+now.</p>
+<p>Of course the final step would be general acceptance and use through
+<a href="https://crates.io/crates/embedded-hal">embedded-hal</a> by getting rid of the associated type. But quite frankly I'm
+very tired of the discussion in <a href="https://github.com/rust-embedded/embedded-hal/issues/229">Issue #229</a> (and in private) where the
+current opinion is stuck in &quot;this is nice but not good enough for [insert
+hypothetical use case here], so let's rather do nothing at all&quot; limbo.</p>
+<p>Please feel free to let me know your thoughts, either personally via the
+available channels or via issues in the mentioned repositories. Of course I'd
+also love to PRs implementing or furthering any of the mentioned things.</p>
+<p>So long and until the next post. 👋</p>
+
+      
+  </article>
+</section>
+
+       
+
+      <footer>
+        
+          
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+          
+<ul class="social_list foot_list" >
+    
+    <li class="button extra_small font_faint"><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+    
+    
+    <li class="button extra_small font_faint"><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="button extra_small font_faint"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+    
+</ul>
+
+        
+      </footer>
+    </body>
+</html>

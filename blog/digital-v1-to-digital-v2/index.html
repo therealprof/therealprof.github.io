@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" >
+        <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+        <!-- SEO -->
+        
+        <title> Converting an Embedded HAL impl from digital::v1 to digital::v2 traits | The subconscious mumblings of therealprof </title>
+        
+
+        <!-- Enable responsiveness on mobile devices-->
+        <meta name="viewport"  content="width=device-width, initial-scale=1.0, maximum-scale=1" >
+
+        <!--  css -->
+        <link rel="stylesheet"  href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/ergo.css" >
+
+        <!-- fonts -->
+        <!-- preload  -->
+        <link rel="preload" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway" as="style">
+        <link rel="preload"  href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous" as="style" >
+        <!-- load -->
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Montserrat:200,300,300i,400,500,500i,600,700,800,900|Raleway">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"  integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+      
+    </head>
+
+    <body>
+      
+        
+<input type="checkbox" id="openSidebarMenu" class="openSidebarMenu">
+<label class="menu cross menu--1" for="openSidebarMenu">
+    <svg viewBox="0 0 75 75" xmlns="https://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="30" />
+        <path class="line--1" d="M0 40h62c13 0 6 28-4 18L35 35" />
+        <path class="line--2" d="M0 50h70" />
+        <path class="line--3" d="M0 60h62c13 0 6-28-4-18L35 65" />
+    </svg>
+</label>
+
+<div id="sidebarMenu">
+    <div class="menu_wrapper">
+        <ul class="sidebarMenuInner">
+            <li>
+                <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" >The subconscious mumblings of therealprof</a>
+                <div class="menu_div" ></div>
+            </li>
+            
+            <li><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+            
+            
+            <li><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            <li><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+            
+        </ul>
+    </div>
+</div>
+
+      
+
+      
+<nav id="overlord" class="overlord" >
+  
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+</nav>
+
+<section class="post_container">
+  <article>
+    
+      <h1 class="article_title"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;blog&#x2F;digital-v1-to-digital-v2&#x2F;" id="article_link">Converting an Embedded HAL impl from digital::v1 to digital::v2 traits</a></h1>
+      
+<ul class="frontmatter frontmatter_page" id="frontmatter">
+    <li>
+        <time class="article_time"  datetime="2019-10-03">October 03, 2019</time>
+    </li>
+    <span class="dotDivider"></span>
+    <li> 807 words </li>
+    <span class="dotDivider" ></span>
+    <li> 5 min </li>
+</ul>
+
+      <p>A while ago people had the idea to introduce fallible traits for GPIO pin to
+allow the implementation of virtual pins and port expanders. In this blog I'm
+demonstrating how to convert an existing implementation to the <code>v2</code> version of
+the traits.</p>
+<span id="continue-reading"></span><h1 id="some-background">Some background</h1>
+<p><a href="https://github.com/rust-embedded/embedded-hal">Embedded HAL</a> (<a href="https://crates.io/crates/embedded-hal">embedded-hal</a>
+on crates.io) contains a number of traits specifying the interface to implement
+and use peripherals usually found on embedded devices. The <code>digital</code> traits in
+particular define functions/methods to be used to both read the electrical
+state of an <strong>input pin</strong> as well as change the electrical state of an <strong>output
+pin</strong>.</p>
+<p>Now a <strong>pin</strong> might not be necessarily a thing which directly corresponds to
+some local memory at the device the program itself is running on but might be
+managed by a remote chip. The big difference is that usually with a local pin
+there's really nothing that can go wrong when reading or changing state as long
+as you can access the memory location related to it[1]. This all changes if the
+pin is not under direct control, e.g. because you're using something like my
+<a href="https://github.com/therealprof/embedded-bridge">embedded-bridge</a> or a GPIO exander chip like the
+<a href="https://crates.io/crates/pcf857x">PCF857x</a>, in which case there are number of
+reasons which a seemingly operation like reading the state might actually fail
+and you want to convey that information to the user of the HAL implementation.</p>
+<p>This is why people decided to introduce a new version of the <code>digital</code> traits
+to convey errors along. The new traits were introduced in the version <code>0.2.3</code>
+of <code>embedded-hal</code> which came with quite a bit of controversy due to the patch
+level only bump together with a rather prominent (and thus potentially
+annoying) deprecation warning.</p>
+<p>But since <code>digital::v2</code> is here to stay, let's see how we can actually make the
+switchover.</p>
+<h1 id="switching-versions">Switching versions</h1>
+<p>The following steps are excertps from the <a href="https://github.com/nrf-rs/nrf51-hal">nrf51-hal</a> conversion, so if you'd
+like to follow along you are invited you to check out this
+<a href="https://github.com/nrf-rs/nrf51-hal/commit/6462b00bbe2ee063d410f58dd8c49a455d8589c2">commit</a>.</p>
+<p>So let's get started...</p>
+<h2 id="use-the-right-version-of-the-traits">Use the right version of the traits</h2>
+<p>In order to use <code>digital::v2</code> rather than <code>digital::v1</code> you either need to
+spell out the version explicitely all the time or you may want to change a use
+statement to import the correct version into the namespace.</p>
+<p>So before I used:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">use embedded_hal::digital::{InputPin, OutputPin, StatefulOutputPin};
+</code></pre>
+<p>and I switched that over to:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">use embedded_hal::digital::v2::{InputPin, OutputPin, StatefulOutputPin};
+</code></pre>
+<h2 id="changing-function-signatures">Changing function signatures</h2>
+<p>Since the new versions always return a <code>Result</code> and the <code>Err</code> part of the
+<code>Result</code> may vary, there's now an associated <code>Error</code> type which needs to be
+specified.</p>
+<p>Since (as mentioned before) for direct MCU pins the operation usually
+infallible I'm specifying the type to be <code>core::convert::Infallible</code>, so we're
+changing from:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">impl&lt;MODE&gt; OutputPin for $PXx&lt;Output&lt;MODE&gt;&gt; {
+</code></pre>
+<p>to:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">impl&lt;MODE&gt; OutputPin for $PXx&lt;Output&lt;MODE&gt;&gt; {
+    type Error = Infallible;
+</code></pre>
+<p>and then of course we need to change the functions to return a result, too, so
+we go from:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">fn set_high(&amp;mut self) {
+    ...
+}
+
+fn set_low(&amp;mut self) {
+    ...
+}
+</code></pre>
+<p>to:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">fn set_high(&amp;mut self) -&gt; Result&lt;(), Self::Error&gt; {
+    Ok(...)
+}
+
+fn set_low(&amp;mut self) -&gt; Result&lt;(), Self::Error&gt; {
+    Ok(...)
+}
+</code></pre>
+<p>Of course in some cases it's slightly more complex because the <code>is_*</code> methods
+are often implemented based on the other implementation and now we need to take
+into account that we're not just inverting a truth value but working with a
+<code>Result</code> so we might have to go from:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">fn is_set_high(&amp;self) -&gt; bool {
+    !self.is_set_low()
+</code></pre>
+<p>to something like this:</p>
+<pre data-lang="Rust" class="language-Rust "><code class="language-Rust" data-lang="Rust">fn is_set_high(&amp;self) -&gt; Result&lt;bool, Self::Error&gt; {
+    self.is_set_low().map(|v| !v)
+}
+</code></pre>
+<h2 id="prelude">Prelude</h2>
+<p>An additional thing you might want to do is to make sure that you add the used
+<code>digital</code> traits to the prelude of the HAL impl so users can simply use the new
+impls without much fuzz.</p>
+<p>So here we add the following to <code>src/prelude.rs</code>:</p>
+<pre><code>pub use embedded_hal::digital::v2::InputPin as __nrf51_hal_rng_InputPin;
+pub use embedded_hal::digital::v2::OutputPin as __nrf51_hal_rng_OutputPin;
+pub use embedded_hal::digital::v2::StatefulOutputPin as __nrf51_hal_rng_StatefulOutputPin;
+pub use embedded_hal::digital::v2::ToggleableOutputPin as __nrf51_hal_rng_ToggleableOutputPin;
+pub use embedded_hal::digital::v2::toggleable as __nrf51_hal_rng_toggleable;
+</code></pre>
+<h2 id="bump-the-minor-version">Bump the minor version</h2>
+<p>This these changes will be breaking for your users you definitely want to well
+document the change, at least by bumping the minor version so people will not
+simply run nasty and unexpected troubles when compiling their code.</p>
+<p>And with this you are done and I hope to see you again on my blog soon.</p>
+<p>[1]: There might be some security features thwarting that direct acces but in the vast majority of cases this not a problem</p>
+
+      
+  </article>
+</section>
+
+       
+
+      <footer>
+        
+          
+<figure class="mini_logo ">
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;" style="background-image: url(https:&#x2F;&#x2F;therealprof.github.io&#x2F;/img/profile.jpg)"></a>
+</figure>
+<h5>
+    <a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;">The subconscious mumblings of therealprof</a>
+</h5>
+
+          
+<ul class="social_list foot_list" >
+    
+    <li class="button extra_small font_faint"><a href="https://therealprof.github.io" target="_blank">therealprof.github.io</a></li>
+    
+    
+    <li class="button extra_small font_faint"><a href="https://github.com/therealprof" target="_blank" >therealprof</a><i class="fab fa-github" ></i></li>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <li class="button extra_small font_faint"><a href="https:&#x2F;&#x2F;therealprof.github.io&#x2F;/rss.xml" target ="_blank">rss</a><i class="fas fa-rss" ></i></li>
+    
+</ul>
+
+        
+      </footer>
+    </body>
+</html>

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+      <title>The subconscious mumblings of therealprof</title>
+        <link>https://therealprof.github.io/</link>
+        <description>Everything you ever wanted to know about electronics, embedded programming, Rust and life in general...</description>
+        <generator>Zola</generator>
+        <language>en</language>
+        <atom:link href="https://therealprof.github.io/rss.xml" rel="self" type="application/rss+xml"/>
+        <lastBuildDate>Mon, 07 Sep 2020 00:00:00 +0000</lastBuildDate>
+        <item>
+            <title>Rust Roadmap 2021: Adding a useful dev mode and making it the default</title>
+            <pubDate>Mon, 07 Sep 2020 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/blog/roadmap-2021-usable-dev-mode/</link>
+            <guid>https://therealprof.github.io/blog/roadmap-2021-usable-dev-mode/</guid>
+            <description>&lt;p&gt;In this blog entry following the &lt;strong&gt;&lt;a href=&quot;https:&#x2F;&#x2F;blog.rust-lang.org&#x2F;2020&#x2F;09&#x2F;03&#x2F;Planning-2021-Roadmap.html&quot;&gt;Call for Rust 2021 Roadmap items&lt;&#x2F;a&gt;&lt;&#x2F;strong&gt;, I
+shall layout my vision for giving Rust the ability to create debuggable
+binaries which will also fit in the flash of a microcontroller.&lt;&#x2F;p&gt;
+</description>
+        </item>
+        <item>
+            <title>Rust Roadmap 2021: Allowing for arbitrary size integer primitives</title>
+            <pubDate>Sun, 06 Sep 2020 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/blog/roadmap-2021-arbitrary-size-primitives/</link>
+            <guid>https://therealprof.github.io/blog/roadmap-2021-arbitrary-size-primitives/</guid>
+            <description>&lt;p&gt;In this blog entry following the &lt;strong&gt;&lt;a href=&quot;https:&#x2F;&#x2F;blog.rust-lang.org&#x2F;2020&#x2F;09&#x2F;03&#x2F;Planning-2021-Roadmap.html&quot;&gt;Call for Rust 2021 Roadmap items&lt;&#x2F;a&gt;&lt;&#x2F;strong&gt;, I
+shall layout my vision for giving Rust the ability to use arbitrarily sized
+integer primitives.&lt;&#x2F;p&gt;
+</description>
+        </item>
+        <item>
+            <title>Revamping Rust Embedded Error Handling － a case for embedded-error</title>
+            <pubDate>Mon, 24 Aug 2020 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/blog/revamping-rust-embedded-error-handling/</link>
+            <guid>https://therealprof.github.io/blog/revamping-rust-embedded-error-handling/</guid>
+            <description>&lt;p&gt;In this blog post we&#x27;ll have a look at error handling in Rust embedded
+scenarios. How does this work at the moment, what are the user expectations
+and what can we do to make error handling future proof?&lt;&#x2F;p&gt;
+</description>
+        </item>
+        <item>
+            <title>Introducing: The USB-C pill</title>
+            <pubDate>Sat, 15 Aug 2020 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/blog/usb-c-pill-part1/</link>
+            <guid>https://therealprof.github.io/blog/usb-c-pill-part1/</guid>
+            <description>&lt;p&gt;In this blog entry I will explore a new excellent and cheap embedded hardware
+board I came across in the context of embedded Rust. This is done in the hope
+that people will jump on it and drop the crapadelic boards known as &amp;quot;BluePill&amp;quot;
+like a hot potato.&lt;&#x2F;p&gt;
+</description>
+        </item>
+        <item>
+            <title>A look into ways to implement and share data with interrupt handlers in Rust (Update 1)</title>
+            <pubDate>Sat, 29 Feb 2020 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/blog/interrupt-comparison/</link>
+            <guid>https://therealprof.github.io/blog/interrupt-comparison/</guid>
+            <description>&lt;p&gt;In this blog entry I will explain a bit what interrupts are and they work in
+embedded systems and compare various interrupt implementation and sharing
+methods in Rust.&lt;&#x2F;p&gt;
+&lt;p&gt;&lt;strong&gt;Update 2020-03-06:&lt;&#x2F;strong&gt; @jamesmunns has provided a new version of &lt;a href=&quot;https:&#x2F;&#x2F;crates.io&#x2F;crates&#x2F;cmim&quot;&gt;cmim&lt;&#x2F;a&gt; which
+allows to use the &lt;code&gt;SysTick&lt;&#x2F;code&gt; exception and an adaption of the example for it so
+I updated this post accordingly.&lt;&#x2F;p&gt;
+</description>
+        </item>
+        <item>
+            <title>Converting an Embedded HAL impl from digital::v1 to digital::v2 traits</title>
+            <pubDate>Thu, 03 Oct 2019 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/blog/digital-v1-to-digital-v2/</link>
+            <guid>https://therealprof.github.io/blog/digital-v1-to-digital-v2/</guid>
+            <description>&lt;p&gt;A while ago people had the idea to introduce fallible traits for GPIO pin to
+allow the implementation of virtual pins and port expanders. In this blog I&#x27;m
+demonstrating how to convert an existing implementation to the &lt;code&gt;v2&lt;&#x2F;code&gt; version of
+the traits.&lt;&#x2F;p&gt;
+</description>
+        </item>
+        <item>
+            <title>A deeper look into embedded-bridge with an example</title>
+            <pubDate>Mon, 26 Aug 2019 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/blog/embedded-bridge-part-2/</link>
+            <guid>https://therealprof.github.io/blog/embedded-bridge-part-2/</guid>
+            <description>&lt;p&gt;In the previous part I introduced the concept of &lt;a href=&quot;https:&#x2F;&#x2F;github.com&#x2F;therealprof&#x2F;embedded-bridge&quot;&gt;embedded-bridge&lt;&#x2F;a&gt;. Now let&#x27;s
+dive a little bit deeper and have a look at a real life example.&lt;&#x2F;p&gt;
+</description>
+        </item>
+        <item>
+            <title>Introduction into a new approach to develop with and for embedded devices</title>
+            <pubDate>Fri, 23 Aug 2019 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/blog/embedded-bridge-part-1/</link>
+            <guid>https://therealprof.github.io/blog/embedded-bridge-part-1/</guid>
+            <description>&lt;p&gt;Maybe you&#x27;ve wondered whether there was a simpler way to prototype with MCUs or
+or interface with typical MCU peripherals in a simpler way than the usual code
+(even in the slightly more complicated &lt;strong&gt;no_std&lt;&#x2F;strong&gt; flavour), program, debug,
+test cycle. Wonder no more because now there&#x27;s a approach on the horizon and
+this first article will explain the concept behind that...&lt;&#x2F;p&gt;
+</description>
+        </item>
+        <item>
+            <title>A closer look at the E32-868T20D LoRA Module with UART interface</title>
+            <pubDate>Tue, 06 Aug 2019 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/blog/e32-868t20d/</link>
+            <guid>https://therealprof.github.io/blog/e32-868t20d/</guid>
+            <description>&lt;p&gt;I&#x27;ve recently set up a gateway for &lt;a href=&quot;https:&#x2F;&#x2F;www.thethingsnetwork.org&#x2F;&quot;&gt;The Things Network&lt;&#x2F;a&gt; and to spice things up
+a bit a was looking into possibilities of hooking up some microcontroller based
+board to it. So it started to look into options how to make this happen.&lt;&#x2F;p&gt;
+</description>
+        </item>
+        <item>
+            <title>Welcome</title>
+            <pubDate>Mon, 05 Aug 2019 00:00:00 +0000</pubDate>
+            <link>https://therealprof.github.io/welcome/</link>
+            <guid>https://therealprof.github.io/welcome/</guid>
+            <description>&lt;h2 id=&quot;what-s-this-again&quot;&gt;What&#x27;s this again?&lt;&#x2F;h2&gt;
+&lt;p&gt;Welcome to yet another attempt to establish a blog type format about everthing
+embedded, electronics and of course Rust.&lt;&#x2F;p&gt;
+&lt;p&gt;I&#x27;ll probably bring some of the previous content over for good measure but
+content gets outdated so fast it&#x27;s not funny anymore. I guess, I&#x27;ll have to
+just come up with new content. ;)&lt;&#x2F;p&gt;
+&lt;h2 id=&quot;license&quot;&gt;License&lt;&#x2F;h2&gt;
+&lt;p&gt;The content of this block is &amp;quot;licensed&amp;quot; under the terms of the &lt;strong&gt;unlicense&lt;&#x2F;strong&gt;,
+which I&#x27;ll put here in its entirety for your enjoyment:&lt;&#x2F;p&gt;
+&lt;pre&gt;&lt;code&gt;This is free and unencumbered software released into the public domain.
+
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED &amp;quot;AS IS&amp;quot;, WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to &amp;lt;http:&amp;#x2F;&amp;#x2F;unlicense.org&amp;gt;
+&lt;&#x2F;code&gt;&lt;&#x2F;pre&gt;
+&lt;p&gt;Please enjoy...&lt;&#x2F;p&gt;
+</description>
+        </item>
+    </channel>
+</rss>
